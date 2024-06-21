@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "cosmetics-analyser"
+version = "0.1.0"
+description = ""
+authors = ["kowalczyk-j <jakubkow505@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.111.0"
+uvicorn = "^0.30.1"
+sqlalchemy = "^2.0.31"
+databases = "^0.9.0"
+pydantic = "^2.7.4"
+alembic = "^1.13.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
