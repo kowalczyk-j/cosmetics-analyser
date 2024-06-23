@@ -13,6 +13,8 @@ sqlalchemy = "^2.0.31"
 databases = "^0.9.0"
 pydantic = "^2.7.4"
 alembic = "^1.13.1"
+pyzbar = "^0.1.9"
+pillow = "^10.3.0"
 
 
 [build-system]
