@@ -11,6 +11,8 @@ VALUES
 INSERT INTO cosmetic_ingredients (cosmetic_id, ingredient_id)
 VALUES
 (1, '94753'),
+(1, '96252'),
+(1, '89819'),
 (2, '94896');
 
 INSERT INTO reviews (cosmetic_id, user_id, title, content, rating, review_date)
