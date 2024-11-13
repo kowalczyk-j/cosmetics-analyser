@@ -1,0 +1,25 @@
+[tool.poetry]
+package-mode = false
+name = "clean-web-app"
+version = "0.1.0"
+description = ""
+authors = ["kowalczyk-j <jakubkow505@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+asgiref = "^3.8.1"
+django = "^5.1.3"
+django-cors-headers = "^4.6.0"
+djangorestframework = "^3.15.2"
+djangorestframework-simplejwt = "^5.3.1"
+pyjwt = "^2.9.0"
+pytz = "^2024.2"
+sqlparse = "^0.5.1"
+psycopg2-binary = "^2.9.10"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
