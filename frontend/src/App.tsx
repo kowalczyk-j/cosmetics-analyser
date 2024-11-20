@@ -1,6 +1,8 @@
 import "./App.css";
 import Homepage from "./components/homepage";
 import TestPage from "./components/TestPage";
+import { RegisterPageComponent } from "./components/register-page";
+import { LoginPageComponent } from "./components/login-page";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
@@ -9,6 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/test" element={<TestPage />} />
+        <Route path="/register" element={<RegisterPageComponent />} />
+        <Route path="/login" element={<LoginPageComponent />} />
       </Routes>
     </Router>
   );

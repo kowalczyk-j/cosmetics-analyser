@@ -15,8 +15,13 @@ const Toolbar = () => {
     <header className="sticky top-0 z-10 bg-background border-b w-full">
       <div className="w-full px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <Search className="text-xl mr-1" />
-          <h1 className="text-xl font-bold">Clean.</h1>
+          <Link
+            to="/"
+            className="flex items-center text-foreground hover:text-primary"
+          >
+            <Search className="text-xl mr-1" />
+            <h1 className="text-xl font-bold">Clean.</h1>
+          </Link>
         </div>
         <div className="flex items-center space-x-4">
           <Link to="/register" className="text-foreground hover:text-primary">
