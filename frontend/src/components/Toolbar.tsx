@@ -41,17 +41,18 @@ const Toolbar = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Moje konto</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profil</span>
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/profile"
+                  className="flex items-center text-foreground"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profil</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Heart className="mr-2 h-4 w-4" />
                 <span>Ulubione</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Search className="mr-2 h-4 w-4" />
-                <span>Historia wyszukiwania</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Calendar className="mr-2 h-4 w-4" />
