@@ -39,6 +39,23 @@ class CosmeticViewSet(viewsets.ModelViewSet):
     queryset = Cosmetic.objects.all()
     serializer_class = CosmeticSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Pobierz parametry zapytania z request
+        product_name = self.request.query_params.get("product_name", None)
+        category = self.request.query_params.get("category", None)
+        manufacturer = self.request.query_params.get("manufacturer", None)
+
+        # Filtruj dane na podstawie parametrów
+        if product_name:
+            queryset = queryset.filter(product_name__icontains=product_name)
+        if category:
+            queryset = queryset.filter(category__iexact=category)
+        if manufacturer:
+            queryset = queryset.filter(manufacturer__iexact=manufacturer)
+
+        return queryset
+
 
 class IngredientINCIViewSet(viewsets.ModelViewSet):
     queryset = IngredientINCI.objects.all()

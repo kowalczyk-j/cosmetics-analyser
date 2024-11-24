@@ -15,6 +15,17 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Toolbar from "./Toolbar";
+import api from "@/api";
+
+interface Cosmetic {
+  id: number;
+  product_name: string;
+  manufacturer: string;
+  barcode: string;
+  description: string;
+  category: string;
+  purchase_link?: string;
+}
 
 const HeaderSection = () => {
   return (
@@ -132,18 +143,20 @@ const Carousel = () => {
 
 export default function Homepage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Cosmetic[]>([]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO search functionality here
-    console.log("Searching for:", searchQuery);
-    // TODO simulating search results
-    setSearchResults([
-      { id: 1, name: "Krem nawilżający", brand: "NaturaCare" },
-      { id: 2, name: "Serum do twarzy", brand: "BeautyEssence" },
-      { id: 3, name: "Balsam do ciała", brand: "SoftSkin" },
-    ]);
+    try {
+      const response = await api.get<Cosmetic[]>("/cosmetics/", {
+        params: { query: searchQuery },
+      });
+      setSearchResults(response.data);
+      console.log("Search results:", response.data);
+    } catch (error) {
+      console.error("Error fetching cosmetics:", error);
+      alert("Wystąpił błąd podczas wyszukiwania kosmetyków.");
+    }
   };
 
   const handleBarcodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -238,11 +251,13 @@ export default function Homepage() {
                     <div className="mt-4 space-y-2">
                       <h3 className="font-semibold">Wyniki wyszukiwania:</h3>
                       <div className="grid grid-cols-2 gap-2">
-                        {searchResults.map((result) => (
-                          <Card key={result.id} className="p-2">
-                            <h4 className="font-medium">{result.name}</h4>
+                        {searchResults.map((cosmetic) => (
+                          <Card key={cosmetic.id} className="p-2">
+                            <h4 className="font-medium">
+                              {cosmetic.product_name}
+                            </h4>
                             <p className="text-sm text-muted-foreground">
-                              {result.brand}
+                              {cosmetic.manufacturer}
                             </p>
                           </Card>
                         ))}
