@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class Person(models.Model):  # Tabela "Osoba"
+class Person(models.Model):  # Osoba
     skin_type = models.CharField(max_length=50, verbose_name="Skin Type")
     skin_problems = models.TextField(verbose_name="Skin Problems")
     specialization = models.CharField(max_length=20, verbose_name="Specialization")
@@ -11,11 +11,7 @@ class Person(models.Model):  # Tabela "Osoba"
         return self.specialization
 
 
-class Test(models.Model):  # Tabela "Osoba"
-    test = models.CharField(max_length=50, verbose_name="test")
-
-
-class User(models.Model):  # Tabela "Użytkownik"
+class User(models.Model):  # Użytkownik
     username = models.CharField(max_length=20, verbose_name="Username")
     email = models.EmailField(max_length=50, verbose_name="Email")
     password = models.CharField(max_length=20, verbose_name="Password")
@@ -26,7 +22,7 @@ class User(models.Model):  # Tabela "Użytkownik"
         return self.username
 
 
-class Cosmetic(models.Model):  # Tabela "Kosmetyk"
+class Cosmetic(models.Model):  # Kosmetyk
     product_name = models.CharField(max_length=100, verbose_name="Product Name")
     manufacturer = models.CharField(max_length=50, verbose_name="Manufacturer")
     barcode = models.CharField(max_length=13, verbose_name="Barcode")
@@ -40,7 +36,7 @@ class Cosmetic(models.Model):  # Tabela "Kosmetyk"
         return self.product_name
 
 
-class IngredientINCI(models.Model):  # Tabela "Składnik_INCI"
+class IngredientINCI(models.Model):  # Składnik_INCI
     cosing_ref_no = models.IntegerField(primary_key=True, verbose_name="COSING Ref No")
     inci_name = models.CharField(max_length=100, verbose_name="INCI Name")
     common_name = models.CharField(max_length=100, verbose_name="Common Name")
@@ -52,12 +48,12 @@ class IngredientINCI(models.Model):  # Tabela "Składnik_INCI"
         return self.inci_name
 
 
-class CosmeticComposition(models.Model):  # Tabela "Skład_kosmetyku"
+class CosmeticComposition(models.Model):  # Skład_kosmetyku
     cosmetic = models.ForeignKey(Cosmetic, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(IngredientINCI, on_delete=models.CASCADE)
 
 
-class Review(models.Model):  # Tabela "Recenzja"
+class Review(models.Model):  # Recenzja
     cosmetic = models.ForeignKey(Cosmetic, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100, verbose_name="Title")
@@ -69,7 +65,7 @@ class Review(models.Model):  # Tabela "Recenzja"
         return f"{self.title} - {self.rating}"
 
 
-class CarePlan(models.Model):  # Tabela "Plan_pielęgnacji"
+class CarePlan(models.Model):  # Plan_pielęgnacji
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     plan_name = models.CharField(max_length=50, verbose_name="Plan Name")
     description = models.TextField(verbose_name="Description")
@@ -80,7 +76,7 @@ class CarePlan(models.Model):  # Tabela "Plan_pielęgnacji"
         return self.plan_name
 
 
-class CarePlanContent(models.Model):  # Tabela "Zawartość_planu_pielęgnacji"
+class CarePlanContent(models.Model):  # Zawartość_planu_pielęgnacji
     plan = models.ForeignKey(CarePlan, on_delete=models.CASCADE)
     cosmetic = models.ForeignKey(Cosmetic, on_delete=models.CASCADE)
     frequency = models.CharField(max_length=50, verbose_name="Frequency")
@@ -88,12 +84,12 @@ class CarePlanContent(models.Model):  # Tabela "Zawartość_planu_pielęgnacji"
     notes = models.TextField(verbose_name="Notes", blank=True, null=True)
 
 
-class CarePlanRating(models.Model):  # Tabela "Ocena_planu_pielęgnacji"
+class CarePlanRating(models.Model):  # Ocena_planu_pielęgnacji
     plan = models.ForeignKey(CarePlan, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.BooleanField(verbose_name="Rating")
 
 
-class FavoriteProduct(models.Model):  # Tabela "Ulubione_produkty"
+class FavoriteProduct(models.Model):  # Ulubione_produkty
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     cosmetic = models.ForeignKey(Cosmetic, on_delete=models.CASCADE)

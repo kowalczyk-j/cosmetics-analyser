@@ -1,36 +1,75 @@
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note
+from rest_framework import viewsets
+from .models import (
+    Person,
+    User,
+    Cosmetic,
+    IngredientINCI,
+    CosmeticComposition,
+    Review,
+    CarePlan,
+    CarePlanContent,
+    CarePlanRating,
+    FavoriteProduct,
+)
+from .serializers import (
+    PersonSerializer,
+    UserSerializer,
+    CosmeticSerializer,
+    IngredientINCISerializer,
+    CosmeticCompositionSerializer,
+    ReviewSerializer,
+    CarePlanSerializer,
+    CarePlanContentSerializer,
+    CarePlanRatingSerializer,
+    FavoriteProductSerializer,
+)
 
 
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
+class PersonViewSet(viewsets.ModelViewSet):
+    queryset = Person.objects.all()
+    serializer_class = PersonSerializer
 
 
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-
-class CreateUserView(generics.CreateAPIView):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+
+
+class CosmeticViewSet(viewsets.ModelViewSet):
+    queryset = Cosmetic.objects.all()
+    serializer_class = CosmeticSerializer
+
+
+class IngredientINCIViewSet(viewsets.ModelViewSet):
+    queryset = IngredientINCI.objects.all()
+    serializer_class = IngredientINCISerializer
+
+
+class CosmeticCompositionViewSet(viewsets.ModelViewSet):
+    queryset = CosmeticComposition.objects.all()
+    serializer_class = CosmeticCompositionSerializer
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+
+class CarePlanViewSet(viewsets.ModelViewSet):
+    queryset = CarePlan.objects.all()
+    serializer_class = CarePlanSerializer
+
+
+class CarePlanContentViewSet(viewsets.ModelViewSet):
+    queryset = CarePlanContent.objects.all()
+    serializer_class = CarePlanContentSerializer
+
+
+class CarePlanRatingViewSet(viewsets.ModelViewSet):
+    queryset = CarePlanRating.objects.all()
+    serializer_class = CarePlanRatingSerializer
+
+
+class FavoriteProductViewSet(viewsets.ModelViewSet):
+    queryset = FavoriteProduct.objects.all()
+    serializer_class = FavoriteProductSerializer

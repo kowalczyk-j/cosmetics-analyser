@@ -1,7 +1,30 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import (
+    PersonViewSet,
+    UserViewSet,
+    CosmeticViewSet,
+    IngredientINCIViewSet,
+    CosmeticCompositionViewSet,
+    ReviewViewSet,
+    CarePlanViewSet,
+    CarePlanContentViewSet,
+    CarePlanRatingViewSet,
+    FavoriteProductViewSet,
+)
+
+router = DefaultRouter()
+router.register(r"persons", PersonViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"cosmetics", CosmeticViewSet)
+router.register(r"ingredients", IngredientINCIViewSet)
+router.register(r"cosmetic_compositions", CosmeticCompositionViewSet)
+router.register(r"reviews", ReviewViewSet)
+router.register(r"care_plans", CarePlanViewSet)
+router.register(r"care_plan_contents", CarePlanContentViewSet)
+router.register(r"care_plan_ratings", CarePlanRatingViewSet)
+router.register(r"favorite_products", FavoriteProductViewSet)
 
 urlpatterns = [
-    path("notes/", views.NoteListCreate.as_view(), name="note-list"),
-    path("notes/delete/<int:pk>/", views.NoteDelete.as_view(), name="delete-note"),
+    path("api/", include(router.urls)),
 ]
