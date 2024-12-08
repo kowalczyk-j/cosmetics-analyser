@@ -14,9 +14,11 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import Toolbar from "./Toolbar";
+import api from "@/api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "@/constants";
 
 export function LoginPageComponent() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -25,14 +27,18 @@ export function LoginPageComponent() {
     e.preventDefault();
     setError("");
 
-    // Here you would typically call an API to authenticate the user
     try {
-      // Simulating an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("User logged in:", { email });
-      navigate("/dashboard"); // Redirect to dashboard or home page after successful login
+      const response = await api.post("/api/token/", {
+        username,
+        password,
+      });
+      localStorage.setItem(ACCESS_TOKEN, response.data.access);
+      localStorage.setItem(REFRESH_TOKEN, response.data.refresh);
+      console.log("User logged in:", { username });
+      navigate("/profile");
     } catch (err) {
-      setError("Nieprawidłowy email lub hasło. Spróbuj ponownie.");
+      console.error("Error during login:", err);
+      setError("Nieprawidłowa nazwa użytkownika lub hasło. Spróbuj ponownie.");
     }
   };
 
@@ -44,20 +50,20 @@ export function LoginPageComponent() {
           <CardHeader className="space-y-1 flex items-center justify-center">
             <CardTitle className="text-2xl font-bold">Zaloguj się</CardTitle>
             <CardDescription>
-              Wprowadź swój adres e-mail i hasło, aby kontynuować.
+              Wprowadź swoją nazwę użytkownika i hasło, aby kontynuować.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Adres e-mail</Label>
+                <Label htmlFor="username">Nazwa użytkownika</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="twoj@email.com"
+                  id="username"
+                  type="text"
+                  placeholder="Twoja nazwa użytkownika"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="space-y-2">

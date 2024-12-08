@@ -1,20 +1,21 @@
 import axios, { AxiosInstance } from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_URL
+import { ACCESS_TOKEN } from "./constants";
 
 const api: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 api.interceptors.request.use(
   (config) => {
-    // const token = localStorage.getItem("access_token");
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = localStorage.getItem(ACCESS_TOKEN);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default api;

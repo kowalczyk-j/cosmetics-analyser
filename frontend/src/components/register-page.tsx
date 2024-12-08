@@ -14,6 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import Toolbar from "./Toolbar";
+import api from "@/api";
 
 export function RegisterPageComponent() {
   const [username, setUsername] = useState("");
@@ -32,13 +33,21 @@ export function RegisterPageComponent() {
       return;
     }
 
-    //API to register the user
     try {
-      // simulating an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("User registered:", { username, email });
+      const response = await api.post("/api/users/register/", {
+        username,
+        email,
+        password,
+        person: {
+          skin_type: "normal",
+          skin_problems: "none",
+          specialization: "user",
+        },
+      });
+      console.log("User registered:", response.data);
       navigate("/login");
     } catch (err) {
+      console.error("Error during registration:", err);
       setError("Wystąpił błąd podczas rejestracji. Spróbuj ponownie.");
     }
   };
