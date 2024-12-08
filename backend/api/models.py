@@ -3,23 +3,15 @@ from django.contrib.auth.models import User
 
 
 class Person(models.Model):  # Osoba
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="person", null=True
+    )
     skin_type = models.CharField(max_length=50, verbose_name="Skin Type")
     skin_problems = models.TextField(verbose_name="Skin Problems")
     specialization = models.CharField(max_length=20, verbose_name="Specialization")
 
     def __str__(self):
         return self.specialization
-
-
-class User(models.Model):  # Użytkownik
-    username = models.CharField(max_length=20, verbose_name="Username")
-    email = models.EmailField(max_length=50, verbose_name="Email")
-    password = models.CharField(max_length=20, verbose_name="Password")
-    registration_date = models.DateField(verbose_name="Registration Date")
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, null=True, blank=True)
-
-    def __str__(self):
-        return self.username
 
 
 class Cosmetic(models.Model):  # Kosmetyk

@@ -1,7 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.contrib.auth.models import User
 from .models import (
     Person,
-    User,
+    User as CustomUser,
     Cosmetic,
     IngredientINCI,
     CosmeticComposition,
@@ -33,6 +37,21 @@ class PersonViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    def register(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CosmeticViewSet(viewsets.ModelViewSet):

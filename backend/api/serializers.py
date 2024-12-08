@@ -20,11 +20,25 @@ class PersonSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    person = PersonSerializer()  # Zagnieżdżony serializer dla osoby
+    person = PersonSerializer()
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "registration_date", "person"]
+        fields = ["id", "username", "email", "password", "person"]
+        extra_kwargs = {"password": {"write_only": True}}
+
+    def create(self, validated_data):
+        # Pobierz dane związane z Person
+        person_data = validated_data.pop("person", None)
+
+        # Stwórz użytkownika
+        user = User.objects.create_user(**validated_data)
+
+        # Powiąż obiekt Person, jeśli dane zostały podane
+        if person_data:
+            Person.objects.create(user=user, **person_data)
+
+        return user
 
 
 class CosmeticSerializer(serializers.ModelSerializer):
