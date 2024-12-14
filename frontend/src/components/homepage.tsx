@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import {
 import { Link } from "react-router-dom";
 import Toolbar from "./Toolbar";
 import api from "@/api";
+import BarcodeScannerComponent from "./barcodescanner";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 interface Cosmetic {
   id: number;
@@ -159,9 +161,36 @@ export default function Homepage() {
     }
   };
 
-  const handleBarcodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO barcode image upload functionality here
-    console.log("Uploading barcode image:", e.target.files?.[0]);
+  const handleBarcodeUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Konwersja obrazu na obiekt URL
+      const fileUrl = URL.createObjectURL(file);
+      const codeReader = new BrowserMultiFormatReader();
+
+      // Przetwarzanie obrazu kodu kreskowego
+      const result = await codeReader.decodeFromImageUrl(fileUrl);
+      console.log("Barcode result:", result.getText());
+
+      // Wysyłanie numeru kodu kreskowego do backendu
+      const response = await api.get<Cosmetic[]>("/cosmetics/", {
+        params: { barcode: result.getText() },
+      });
+      setSearchResults(response.data);
+      alert(`Znaleziono produkty: ${response.data.length}`);
+    } catch (error) {
+      console.error("Error decoding barcode:", error);
+      alert("Nie udało się rozpoznać kodu kreskowego.");
+    }
+  };
+
+  const handleScan = (result: string) => {
+    console.log("Scanned barcode:", result);
+    // TODO searching for product by barcode logic
   };
 
   return (
@@ -193,12 +222,7 @@ export default function Homepage() {
                 </TabsList>
                 <TabsContent value="scan" className="space-y-4">
                   <div className="flex flex-col items-center space-y-4">
-                    <Button
-                      size="lg"
-                      className="w-full py-8 text-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      <Barcode className="mr-2 h-6 w-6" /> Skanuj kod kreskowy
-                    </Button>
+                    <BarcodeScannerComponent onScan={handleScan} />
                     <div className="relative w-full">
                       <Input
                         type="file"
