@@ -6,9 +6,13 @@ class Person(models.Model):  # Osoba
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="person", null=True
     )
-    skin_type = models.CharField(max_length=50, verbose_name="Skin Type")
-    skin_problems = models.TextField(verbose_name="Skin Problems")
-    specialization = models.CharField(max_length=20, verbose_name="Specialization")
+    skin_type = models.CharField(
+        max_length=50, verbose_name="Skin Type", default="normal"
+    )
+    skin_problems = models.TextField(verbose_name="Skin Problems", default="None")
+    specialization = models.CharField(
+        max_length=20, verbose_name="Specialization", default="user"
+    )
 
     def __str__(self):
         return self.specialization
