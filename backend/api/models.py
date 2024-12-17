@@ -21,7 +21,7 @@ class Person(models.Model):  # Osoba
 class Cosmetic(models.Model):  # Kosmetyk
     product_name = models.CharField(max_length=100, verbose_name="Product Name")
     manufacturer = models.CharField(max_length=50, verbose_name="Manufacturer")
-    barcode = models.CharField(max_length=13, verbose_name="Barcode")
+    barcode = models.CharField(max_length=13, verbose_name="Barcode")  # id
     description = models.TextField(verbose_name="Description")
     category = models.CharField(max_length=50, verbose_name="Category")
     purchase_link = models.URLField(

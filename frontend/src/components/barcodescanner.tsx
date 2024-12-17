@@ -37,8 +37,6 @@ const BarcodeScannerComponent = ({
             }}
             torch={torch}
           />
-
-          {/* Ikona latarki w lewym górnym rogu */}
           <div className="absolute top-2 left-2">
             <button
               onClick={toggleTorch}

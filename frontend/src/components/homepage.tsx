@@ -18,6 +18,7 @@ import Toolbar from "./Toolbar";
 import api from "@/api";
 import BarcodeScannerComponent from "./barcodescanner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import Modal from "@/components/ui/modal";
 
 interface Cosmetic {
   id: number;
@@ -146,6 +147,9 @@ const Carousel = () => {
 export default function Homepage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Cosmetic[]>([]);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const [cosmeticInfo, setCosmeticInfo] = useState<Cosmetic | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,6 +162,24 @@ export default function Homepage() {
     } catch (error) {
       console.error("Error fetching cosmetics:", error);
       alert("Wystąpił błąd podczas wyszukiwania kosmetyków.");
+    }
+  };
+
+  const fetchCosmeticInfo = async (barcode: string) => {
+    try {
+      const response = await api.get<Cosmetic[]>("api/cosmetics/", {
+        params: { barcode },
+      });
+      if (response.data.length > 0) {
+        setCosmeticInfo(response.data[0]);
+      } else {
+        setCosmeticInfo(null);
+      }
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching cosmetic info:", error);
+      setCosmeticInfo(null);
+      setIsModalOpen(true);
     }
   };
 
@@ -176,12 +198,8 @@ export default function Homepage() {
       const result = await codeReader.decodeFromImageUrl(fileUrl);
       console.log("Barcode result:", result.getText());
 
-      // Wysyłanie numeru kodu kreskowego do backendu
-      const response = await api.get<Cosmetic[]>("/cosmetics/", {
-        params: { barcode: result.getText() },
-      });
-      setSearchResults(response.data);
-      alert(`Znaleziono produkty: ${response.data.length}`);
+      setScannedBarcode(result.getText());
+      fetchCosmeticInfo(result.getText());
     } catch (error) {
       console.error("Error decoding barcode:", error);
       alert("Nie udało się rozpoznać kodu kreskowego.");
@@ -190,7 +208,8 @@ export default function Homepage() {
 
   const handleScan = (result: string) => {
     console.log("Scanned barcode:", result);
-    // TODO searching for product by barcode logic
+    setScannedBarcode(result);
+    fetchCosmeticInfo(result);
   };
 
   return (
@@ -334,6 +353,40 @@ export default function Homepage() {
           </div>
         </div>
       </footer>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <h2 className="text-xl font-bold mb-4">Zeskanowany kod kreskowy</h2>
+        {cosmeticInfo ? (
+          <div>
+            <p>
+              <strong>Nazwa produktu:</strong> {cosmeticInfo.product_name}
+            </p>
+            <p>
+              <strong>Producent:</strong> {cosmeticInfo.manufacturer}
+            </p>
+            <p>
+              <strong>Opis:</strong> {cosmeticInfo.description}
+            </p>
+            <p>
+              <strong>Kategoria:</strong> {cosmeticInfo.category}
+            </p>
+            {cosmeticInfo.purchase_link && (
+              <p>
+                <strong>Link do zakupu:</strong>{" "}
+                <a
+                  href={cosmeticInfo.purchase_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {cosmeticInfo.purchase_link}
+                </a>
+              </p>
+            )}
+          </div>
+        ) : (
+          <p>Nie znaleziono kosmetyku o podanym kodzie kreskowym.</p>
+        )}
+      </Modal>
     </div>
   );
 }
