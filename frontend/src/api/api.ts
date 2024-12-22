@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { ACCESS_TOKEN } from "./constants";
+import { ACCESS_TOKEN } from "../lib/constants";
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,

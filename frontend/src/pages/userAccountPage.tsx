@@ -32,7 +32,7 @@ import {
   Waves,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import Toolbar from "./Toolbar";
+import Toolbar from "@/components/Toolbar";
 
 export function UserAccountComponent() {
   const [email, setEmail] = useState("user@example.com");

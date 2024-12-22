@@ -1,16 +1,15 @@
-import "./App.css";
-import Homepage from "./components/homepage";
-import TestPage from "./components/TestPage";
-import { RegisterPageComponent } from "./components/register-page";
-import { LoginPageComponent } from "./components/login-page";
+import { Homepage } from "@/pages/homePage";
+import NotFoundPage from "../pages/notFoundPage";
+import { RegisterPage } from "@/pages/registerPage";
+import { LoginPageComponent } from "../pages/loginPage";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { UserAccountComponent } from "./components/user-account";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { UserAccountComponent } from "../pages/userAccountPage";
+import ProtectedRoute from "./ProtectedRoute";
 
 function Logout() {
   localStorage.clear();
@@ -19,7 +18,7 @@ function Logout() {
 
 function RegisterAndLogout() {
   localStorage.clear();
-  return <RegisterPageComponent />;
+  return <RegisterPage />;
 }
 
 function App() {
@@ -27,7 +26,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Homepage />} />
-        <Route path="*" element={<TestPage />} />
+        <Route path="*" element={<NotFoundPage />} />
         <Route path="/register" element={<RegisterAndLogout />} />
         <Route path="/login" element={<LoginPageComponent />} />
         <Route path="/logout" element={<Logout />} />

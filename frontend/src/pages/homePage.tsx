@@ -15,9 +15,9 @@ import {
   CirclePlus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import Toolbar from "./Toolbar";
-import api from "@/api";
-import BarcodeScannerComponent from "./barcodescanner";
+import Toolbar from "@/components/Toolbar";
+import api from "@/api/api";
+import BarcodeScannerComponent from "@/components/BarcodeScanner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import Modal from "@/components/ui/modal";
 
@@ -145,7 +145,7 @@ const Carousel = () => {
   );
 };
 
-export default function Homepage() {
+export function Homepage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Cosmetic[]>([]);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);

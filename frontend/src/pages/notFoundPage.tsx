@@ -1,7 +1,7 @@
 import React from "react";
 
-const TestPage = () => {
+const NotFoundPage = () => {
   return <div className="min-h-screen w-full bg-red-500"></div>;
 };
 
-export default TestPage;
+export default NotFoundPage;

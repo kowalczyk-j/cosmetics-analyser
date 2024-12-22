@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
-import Toolbar from "./Toolbar";
-import api from "@/api";
+import Toolbar from "@/components/Toolbar";
+import api from "@/api/api";
 
-export function RegisterPageComponent() {
+export function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

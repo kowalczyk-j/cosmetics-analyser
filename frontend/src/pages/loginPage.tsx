@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
-import Toolbar from "./Toolbar";
-import api from "@/api";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "@/constants";
+import Toolbar from "@/components/Toolbar";
+import api from "@/api/api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "@/lib/constants";
 
 export function LoginPageComponent() {
   const [username, setUsername] = useState("");
