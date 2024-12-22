@@ -12,6 +12,7 @@ import {
   Info,
   Search,
   Upload,
+  CirclePlus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Toolbar from "./Toolbar";
@@ -202,7 +203,9 @@ export default function Homepage() {
       fetchCosmeticInfo(result.getText());
     } catch (error) {
       console.error("Error decoding barcode:", error);
-      alert("Nie udało się rozpoznać kodu kreskowego.");
+      setScannedBarcode(null);
+      setCosmeticInfo(null);
+      setIsModalOpen(true);
     }
   };
 
@@ -354,8 +357,16 @@ export default function Homepage() {
         </div>
       </footer>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <h2 className="text-xl font-bold mb-4">Zeskanowany kod kreskowy</h2>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={
+          cosmeticInfo ? "Informacje o produkcie" : "Nie znaleziono produktu"
+        }
+        footerButtonLabel={cosmeticInfo ? "Sprawdź skład" : "Dodaj produkt"}
+        onFooterButtonClick={() => setIsModalOpen(false)}
+        footerButtonIcon={cosmeticInfo ? <Search /> : <CirclePlus />}
+      >
         {cosmeticInfo ? (
           <div>
             <p>
@@ -365,26 +376,22 @@ export default function Homepage() {
               <strong>Producent:</strong> {cosmeticInfo.manufacturer}
             </p>
             <p>
-              <strong>Opis:</strong> {cosmeticInfo.description}
-            </p>
-            <p>
               <strong>Kategoria:</strong> {cosmeticInfo.category}
             </p>
-            {cosmeticInfo.purchase_link && (
-              <p>
-                <strong>Link do zakupu:</strong>{" "}
-                <a
-                  href={cosmeticInfo.purchase_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {cosmeticInfo.purchase_link}
-                </a>
-              </p>
-            )}
           </div>
+        ) : scannedBarcode ? (
+          <>
+            <p>Zeskanowano kod kreskowy: {scannedBarcode}</p>
+            <p>
+              Sprawdź wykryty przez nas kod. Jeśli jest on poprawny, możesz
+              wspomóc naszą społeczność, dodając kosmetyk do bazy.
+            </p>
+          </>
         ) : (
-          <p>Nie znaleziono kosmetyku o podanym kodzie kreskowym.</p>
+          <p>
+            Nie rozpoznano kodu kreskowego. Spróbuj ponownie lub dodaj kosmetyk
+            do naszej bazy, wpisując kod kreskowy ręcznie.
+          </p>
         )}
       </Modal>
     </div>
