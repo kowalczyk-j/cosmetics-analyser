@@ -34,7 +34,7 @@ import {
 import { Link } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
 
-export function UserAccountComponent() {
+export function UserAccount() {
   const [email, setEmail] = useState("user@example.com");
   const [skinType, setSkinType] = useState("normal");
   const [skinConcerns, setSkinConcerns] = useState([]);

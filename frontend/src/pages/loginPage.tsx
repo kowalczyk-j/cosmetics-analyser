@@ -17,7 +17,7 @@ import Toolbar from "@/components/Toolbar";
 import api from "@/api/api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "@/lib/constants";
 
-export function LoginPageComponent() {
+export function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
