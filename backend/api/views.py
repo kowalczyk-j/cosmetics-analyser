@@ -53,6 +53,57 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """
+        It returns information about the currently logged-in user.
+        The token is verified by the JWTAuthentication mechanism,
+        and the user object available in request.user.
+        """
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["patch"], permission_classes=[IsAuthenticated])
+    def change_email(self, request):
+        user = request.user
+        new_email = request.data.get("new_email", "").strip()
+        if not new_email:
+            return Response(
+                {"detail": "Nie podano adresu e-mail."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.email = new_email
+        user.save()
+        return Response(
+            {"detail": "Email został zmieniony."}, status=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=["patch"], permission_classes=[IsAuthenticated])
+    def change_password(self, request):
+        user = request.user
+        old_password = request.data.get("old_password", "")
+        new_password = request.data.get("new_password", "")
+        confirm_password = request.data.get("confirm_password", "")
+
+        if not user.check_password(old_password):
+            return Response(
+                {"detail": "Stare hasło jest niepoprawne."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not new_password or new_password != confirm_password:
+            return Response(
+                {"detail": "Nowe hasła nie są identyczne."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save()
+        return Response(
+            {"detail": "Hasło zostało zmienione."}, status=status.HTTP_200_OK
+        )
+
 
 class CosmeticViewSet(viewsets.ModelViewSet):
     queryset = Cosmetic.objects.all()

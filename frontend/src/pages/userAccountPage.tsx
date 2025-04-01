@@ -1,12 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "@/api/api";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,14 +25,140 @@ import {
   Droplet,
   FlaskRoundIcon as Flask,
   Waves,
+  User,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
 
+function ConfirmEmailChangeModal({
+  visible,
+  newEmail,
+  onConfirm,
+  onCancel,
+}: {
+  visible: boolean;
+  newEmail: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!visible) return null;
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+      <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
+        <p>
+          Czy na pewno zmienić adres e-mail na: <strong>{newEmail}</strong>?
+        </p>
+        <div className="flex justify-end space-x-2 mt-4">
+          <Button variant="outline" onClick={onCancel}>
+            Anuluj
+          </Button>
+          <Button onClick={onConfirm}>Tak, zmień</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function UserAccount() {
-  const [email, setEmail] = useState("user@example.com");
+  const [userData, setUserData] = useState<{
+    username: string;
+    email: string;
+    person?: { specialization: string };
+    is_staff?: boolean;
+    date_joined?: string;
+  } | null>(null);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
   const [skinType, setSkinType] = useState("normal");
-  const [skinConcerns, setSkinConcerns] = useState([]);
+  const [skinConcerns, setSkinConcerns] = useState<string[]>([]);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [errorEmail, setErrorEmail] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorPass, setErrorPass] = useState("");
+  const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get("/api/users/me/");
+        setUserData(response.data);
+      } catch {
+        setError("Nie udało się pobrać danych użytkownika.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleChangeEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorEmail("");
+
+    if (!newEmail.trim()) {
+      setErrorEmail("Podaj nowy adres e-mail.");
+      return;
+    }
+
+    setShowConfirmEmailModal(true);
+  };
+
+  const confirmEmailChange = async () => {
+    try {
+      const response = await api.patch("/api/users/change_email/", {
+        new_email: newEmail,
+      });
+      alert(response.data.detail);
+      setNewEmail("");
+    } catch (err) {
+      setErrorEmail("Nie udało się zmienić e-maila.");
+    } finally {
+      setShowConfirmEmailModal(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorPass("");
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setErrorPass("Wypełnij wszystkie pola.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorPass("Nowe hasła nie są identyczne.");
+      return;
+    }
+
+    try {
+      const response = await api.patch("/api/users/change_password/", {
+        old_password: oldPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      alert(response.data.detail);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setErrorPass("Nie udało się zmienić hasła.");
+    }
+  };
+
+  if (isLoading) {
+    return <div>Ładowanie profilu...</div>;
+  }
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+  if (!userData) {
+    return <div>Brak danych użytkownika.</div>;
+  }
 
   const favoriteProducts = [
     {
@@ -65,15 +186,19 @@ export function UserAccount() {
     <div className="flex flex-col min-h-screen bg-background">
       <Toolbar />
       <div className="container mx-auto px-4 py-8">
+        {/* First Card */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl">Witaj, JanKowalski</CardTitle>
-                <Badge variant="secondary" className="mt-2">
-                  Zwykły użytkownik
-                </Badge>
+              <div className="flex items-center gap-2">
+                <User className="w-6 h-6 text-primary" />
+                <CardTitle className="text-xl sm:text-2xl">
+                  Witaj, {userData.username}
+                </CardTitle>
               </div>
+              <Badge variant="secondary" className="mt-2">
+                {userData.is_staff ? "Admin" : "Użytkownik"}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -82,54 +207,211 @@ export function UserAccount() {
                 <p className="text-sm font-medium text-muted-foreground">
                   E-mail
                 </p>
-                <p className="text-lg font-semibold">{email}</p>
+                <p className="text-lg font-semibold">{userData.email}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Data dołączenia
                 </p>
-                <p className="text-lg font-semibold">01.01.2023</p>
+                <p className="text-lg font-semibold">
+                  {userData.date_joined
+                    ? new Date(userData.date_joined).toLocaleDateString("pl-PL")
+                    : "Brak danych"}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profil</CardTitle>
-              <CardDescription>
-                Zarządzaj swoimi danymi osobowymi i preferencjami
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="email">
-                  <AccordionTrigger>Zmień adres e-mail</AccordionTrigger>
-                  <AccordionContent>
-                    <form className="space-y-4">
+        <Accordion type="multiple" defaultValue={[]} className="space-y-4">
+          {/* MOJA SKÓRA */}
+          <AccordionItem value="skin">
+            <AccordionTrigger className="text-lg font-semibold">
+              Moja skóra
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4 mt-4">
+                    Uzupełnij informacje o swojej skórze, abyśmy mogli lepiej
+                    dopasować produkty do Twoich potrzeb.
+                  </p>
+                  <form className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="skin-type">Typ skóry</Label>
+                      <Select value={skinType} onValueChange={setSkinType}>
+                        <SelectTrigger id="skin-type">
+                          <SelectValue placeholder="Wybierz typ skóry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">Normalna</SelectItem>
+                          <SelectItem value="dry">Sucha</SelectItem>
+                          <SelectItem value="oily">Tłusta</SelectItem>
+                          <SelectItem value="combination">Mieszana</SelectItem>
+                          <SelectItem value="sensitive">Wrażliwa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Problemy skórne</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "Trądzik",
+                          "Zmarszczki",
+                          "Przebarwienia",
+                          "Zaczerwienienia",
+                          "Suchość",
+                        ].map((concern) => (
+                          <Button
+                            key={concern}
+                            variant={
+                              skinConcerns.includes(concern)
+                                ? "default"
+                                : "outline"
+                            }
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSkinConcerns((prev) =>
+                                prev.includes(concern)
+                                  ? prev.filter((c) => c !== concern)
+                                  : [...prev, concern]
+                              );
+                            }}
+                          >
+                            {concern}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <Button type="submit">Zapisz zmiany</Button>
+                  </form>
+                  <div className="mt-4">
+                    <Link
+                      to="/skin-survey"
+                      className="text-primary hover:underline"
+                    >
+                      Nie znasz się na tym? Wypełnij ankietę i pomóż nam wybrać
+                      za ciebie
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* ULUBIONE PRODUKTY */}
+          <AccordionItem value="favorites">
+            <AccordionTrigger className="text-lg font-semibold">
+              Ulubione produkty
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4 mt-4">
+                    Zarządzaj swoją listą ulubionych produktów
+                  </p>
+                  {favoriteProducts.length > 0 ? (
+                    <>
+                      <ul className="space-y-2 mt-4">
+                        {favoriteProducts.slice(0, 3).map((product) => (
+                          <li
+                            key={product.id}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex items-center">
+                              {product.type === "cream" && (
+                                <Droplet className="w-4 h-4 mr-2" />
+                              )}
+                              {product.type === "serum" && (
+                                <Flask className="w-4 h-4 mr-2" />
+                              )}
+                              {product.type === "cleanser" && (
+                                <Waves className="w-4 h-4 mr-2" />
+                              )}
+                              <div>
+                                <p className="font-medium">{product.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {product.brand}
+                                </p>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="sm">
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-4">
+                        <Link
+                          to="/favorite-products"
+                          className="text-primary hover:underline"
+                        >
+                          Zobacz pełną listę ulubionych produktów
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      Nie masz jeszcze ulubionych produktów.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* PROFIL */}
+          <AccordionItem value="profile">
+            <AccordionTrigger className="text-lg font-semibold">
+              Ustawienia profilu
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4 mt-4">
+                    Zarządzaj swoimi danymi osobowymi i preferencjami
+                  </p>
+                  {/* Formularz zmiany e-maila */}
+                  <div className="border p-4 rounded">
+                    <form onSubmit={handleChangeEmail} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="new-email">Nowy adres e-mail</Label>
                         <Input
                           id="new-email"
                           type="email"
                           placeholder="Wprowadź nowy adres e-mail"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
                         />
+                        {errorEmail && (
+                          <p className="text-red-500 text-sm">{errorEmail}</p>
+                        )}
                       </div>
                       <Button type="submit">Zmień e-mail</Button>
                     </form>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="password">
-                  <AccordionTrigger>Zmień hasło</AccordionTrigger>
-                  <AccordionContent>
-                    <form className="space-y-4">
+                  </div>
+
+                  {/* Pop-up potwierdzenia zmiany e-maila */}
+                  <ConfirmEmailChangeModal
+                    visible={showConfirmEmailModal}
+                    newEmail={newEmail}
+                    onConfirm={confirmEmailChange}
+                    onCancel={() => setShowConfirmEmailModal(false)}
+                  />
+
+                  {/* Formularz zmiany hasła */}
+                  <div className="border p-4 rounded mt-4">
+                    <form onSubmit={handleChangePassword} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="current-password">Aktualne hasło</Label>
                         <Input
                           id="current-password"
                           type="password"
                           placeholder="Wprowadź aktualne hasło"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -138,6 +420,8 @@ export function UserAccount() {
                           id="new-password"
                           type="password"
                           placeholder="Wprowadź nowe hasło"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -148,155 +432,46 @@ export function UserAccount() {
                           id="confirm-password"
                           type="password"
                           placeholder="Potwierdź nowe hasło"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                         />
+                        {errorPass && (
+                          <p className="text-red-500 text-sm">{errorPass}</p>
+                        )}
                       </div>
                       <Button type="submit">Zmień hasło</Button>
                     </form>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Moja skóra</CardTitle>
-              <CardDescription>
-                Zaktualizuj informacje o swojej skórze
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="skin-type">Typ skóry</Label>
-                  <Select value={skinType} onValueChange={setSkinType}>
-                    <SelectTrigger id="skin-type">
-                      <SelectValue placeholder="Wybierz typ skóry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normalna</SelectItem>
-                      <SelectItem value="dry">Sucha</SelectItem>
-                      <SelectItem value="oily">Tłusta</SelectItem>
-                      <SelectItem value="combination">Mieszana</SelectItem>
-                      <SelectItem value="sensitive">Wrażliwa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Problemy skórne</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      "Trądzik",
-                      "Zmarszczki",
-                      "Przebarwienia",
-                      "Zaczerwienienia",
-                      "Suchość",
-                    ].map((concern) => (
-                      <Button
-                        key={concern}
-                        variant={
-                          skinConcerns.includes(concern) ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() =>
-                          setSkinConcerns((prev) =>
-                            prev.includes(concern)
-                              ? prev.filter((c) => c !== concern)
-                              : [...prev, concern]
-                          )
-                        }
-                      >
-                        {concern}
-                      </Button>
-                    ))}
                   </div>
-                </div>
-                <Button type="submit">Zapisz zmiany</Button>
-              </form>
-              <div className="mt-4">
-                <Link
-                  to="/skin-survey"
-                  className="text-primary hover:underline"
-                >
-                  Nie znasz się na tym? Wypełnij ankietę i pomóż nam wybrać za
-                  ciebie
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Ulubione produkty</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {favoriteProducts.length > 0 ? (
-                <>
-                  <ul className="space-y-2">
-                    {favoriteProducts.slice(0, 3).map((product) => (
-                      <li
-                        key={product.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center">
-                          {product.type === "cream" && (
-                            <Droplet className="w-4 h-4 mr-2" />
-                          )}
-                          {product.type === "serum" && (
-                            <Flask className="w-4 h-4 mr-2" />
-                          )}
-                          {product.type === "cleanser" && (
-                            <Waves className="w-4 h-4 mr-2" />
-                          )}
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {product.brand}
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4">
-                    <Link
-                      to="/favorite-products"
-                      className="text-primary hover:underline"
-                    >
-                      Zobacz pełną listę ulubionych produktów
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <p className="text-muted-foreground">
-                  Nie masz jeszcze ulubionych produktów.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Button className="h-auto py-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 mr-2" />
-                <span>Moje rutyny pielęgnacyjne</span>
-              </div>
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex items-center justify-between"
+        <div className="grid gap-4 sm:grid-cols-2 mt-6">
+          <Button className="h-auto py-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <Calendar className="w-5 h-5 mr-2" />
+              <span>Moje rutyny pielęgnacyjne</span>
+            </div>
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-auto py-4 flex items-center justify-between"
+          >
+            <Link
+              to="/"
+              className="text-primary hover:underline visited:text-primary"
             >
               <div className="flex items-center">
                 <Barcode className="w-5 h-5 mr-2" />
                 <span>Skanuj nowy produkt</span>
               </div>
               <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

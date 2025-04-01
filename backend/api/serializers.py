@@ -24,17 +24,26 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "person"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = [
+            "id",
+            "username",
+            "email",
+            "password",
+            "person",
+            "date_joined",
+            "is_staff",
+        ]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "date_joined": {"read_only": True},
+            "is_staff": {"read_only": True},
+        }
 
     def create(self, validated_data):
-        # Pobierz dane związane z Person
         person_data = validated_data.pop("person", None)
 
-        # Stwórz użytkownika
         user = User.objects.create_user(**validated_data)
 
-        # Powiąż obiekt Person, jeśli dane zostały podane
         if person_data:
             Person.objects.create(user=user, **person_data)
 
