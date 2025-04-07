@@ -168,11 +168,12 @@ export function Homepage() {
 
   const fetchCosmeticInfo = async (barcode: string) => {
     try {
-      const response = await api.get<Cosmetic[]>("api/cosmetics/", {
+      const response = await api.get<Cosmetic[]>("/api/cosmetics/", {
         params: { barcode },
       });
       if (response.data.length > 0) {
-        setCosmeticInfo(response.data[0]);
+        console.log("Cosmetic info:", response.data);
+        setCosmeticInfo(response.data[0] || null);
       } else {
         setCosmeticInfo(null);
       }
@@ -200,12 +201,19 @@ export function Homepage() {
       console.log("Barcode result:", result.getText());
 
       setScannedBarcode(result.getText());
-      fetchCosmeticInfo(result.getText());
+
+      // Zamknij modal, jeśli jest otwarty, aby umożliwić ponowne otwarcie
+      setIsModalOpen(false);
+
+      // Dodaj krótkie opóźnienie przed ponownym otwarciem modala
+      setTimeout(() => {
+        fetchCosmeticInfo(result.getText());
+      }, 100);
     } catch (error) {
       console.error("Error decoding barcode:", error);
-      setScannedBarcode(null);
-      setCosmeticInfo(null);
-      setIsModalOpen(true);
+    } finally {
+      // reset, aby umożliwić ponowne wgranie tego samego pliku
+      e.target.value = "";
     }
   };
 
@@ -267,7 +275,9 @@ export function Homepage() {
                     <p className="text-center text-muted-foreground">
                       Zeskanuj kod kreskowy dowolnego produktu kosmetycznego lub
                       wgraj jego zdjęcie, aby dowiedzieć się więcej o jego
-                      składnikach INCI.
+                      składnikach INCI. Uwaga, korzystanie z aparatu zaleca się
+                      tylko w przypadku smartfonów (większość kamer w laptopie
+                      nie jest w stanie rozpoznać kodu).
                     </p>
                   </div>
                 </TabsContent>

@@ -43,9 +43,9 @@ const BarcodeScannerComponent: React.FC<BarcodeScannerProps> = ({ onScan }) => {
         decoder: {
           readers: [
             "ean_reader",
-            "code_128_reader",
-            "ean_8_reader",
-            "upc_reader",
+            // "code_128_reader",
+            // "ean_8_reader",
+            // "upc_reader",
           ],
         },
         locate: true,
