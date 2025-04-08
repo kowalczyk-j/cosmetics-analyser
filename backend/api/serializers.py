@@ -54,7 +54,6 @@ class CosmeticSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cosmetic
         fields = [
-            "id",
             "product_name",
             "manufacturer",
             "barcode",
