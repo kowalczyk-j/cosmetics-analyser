@@ -10,7 +10,7 @@ import {
 } from "react-router-dom";
 import { UserAccount } from "../pages/userAccountPage";
 import ProtectedRoute from "./ProtectedRoute";
-import { CosmeticDetailsPage } from "@/pages/cosmeticDetailsPage";
+import { CosmeticPage } from "@/pages/cosmeticPage";
 
 function Logout() {
   localStorage.clear();
@@ -26,7 +26,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/cosmetics/:productId" element={<CosmeticDetailsPage />} />
+        <Route path="/cosmetics/:productId" element={<CosmeticPage />} />
         <Route path="/" element={<Homepage />} />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/register" element={<RegisterAndLogout />} />

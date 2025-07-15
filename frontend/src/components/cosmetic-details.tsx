@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Heart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,14 +14,12 @@ import { Separator } from "@/components/ui/separator";
 import api from "@/api/api";
 
 interface Cosmetic {
-  id: string;
-  name: string;
-  brand: string;
+  product_name: string;
+  manufacturer: string;
   category: string;
   barcode: string;
-  purchaseUrl?: string;
+  purchase_link?: string;
   description: string;
-  imageUrl?: string;
 }
 
 async function getCosmeticDetails(productId: string): Promise<Cosmetic> {
@@ -69,8 +67,8 @@ export function CosmeticDetails({ productId }: { productId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">{cosmetic.name}</CardTitle>
-        <CardDescription>{cosmetic.brand}</CardDescription>
+        <CardTitle className="text-2xl">{cosmetic.product_name}</CardTitle>
+        <CardDescription>{cosmetic.manufacturer}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -97,16 +95,20 @@ export function CosmeticDetails({ productId }: { productId: string }) {
           <p className="text-sm">{cosmetic.description}</p>
         </div>
       </CardContent>
-      {cosmetic.purchaseUrl && (
+      {cosmetic.purchase_link && (
         <CardFooter>
           <Button asChild className="w-full">
             <a
-              href={cosmetic.purchaseUrl}
+              href={cosmetic.purchase_link}
               target="_blank"
               rel="noopener noreferrer"
             >
               Kup Teraz <ExternalLink className="ml-2 h-4 w-4" />
             </a>
+          </Button>
+          <Button variant="ghost" className="ml-2">
+            Dodaj do ulubionych
+            <Heart className="h-4 w-4" />
           </Button>
         </CardFooter>
       )}

@@ -11,6 +11,7 @@ from .views import (
     CarePlanContentViewSet,
     CarePlanRatingViewSet,
     FavoriteProductViewSet,
+    import_cosing_view,
 )
 
 router = DefaultRouter()
@@ -26,5 +27,6 @@ router.register(r"care_plan_ratings", CarePlanRatingViewSet)
 router.register(r"favorite_products", FavoriteProductViewSet)
 
 urlpatterns = [
-    path("api/", include(router.urls)),
+    path("", include(router.urls)),
+    path("import_cosing/", import_cosing_view, name="import_cosing"),
 ]

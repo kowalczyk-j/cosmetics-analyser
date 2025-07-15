@@ -36,11 +36,20 @@ class Cosmetic(models.Model):  # Kosmetyk
 
 class IngredientINCI(models.Model):  # Składnik_INCI
     cosing_ref_no = models.IntegerField(primary_key=True, verbose_name="COSING Ref No")
-    inci_name = models.CharField(max_length=100, verbose_name="INCI Name")
-    common_name = models.CharField(max_length=100, verbose_name="Common Name")
-    action_description = models.TextField(verbose_name="Action Description")
-    function = models.CharField(max_length=50, verbose_name="Function")
+    inci_name = models.CharField(max_length=200, verbose_name="INCI Name")
+    common_name = models.CharField(
+        max_length=200, verbose_name="Common Name", blank=True, null=True
+    )
+    action_description = models.TextField(
+        verbose_name="Action Description", blank=True, null=True
+    )
+    function = models.CharField(
+        max_length=200, verbose_name="Function", blank=True, null=True
+    )
     restrictions = models.TextField(verbose_name="Restrictions", blank=True, null=True)
+    update_date = models.CharField(
+        max_length=20, verbose_name="Update Date", blank=True, null=True
+    )
 
     def __str__(self):
         return self.inci_name

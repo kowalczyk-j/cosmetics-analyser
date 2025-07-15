@@ -21,10 +21,10 @@ async function getReviews(productId: string): Promise<Review[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   const mockReviews: Record<string, Review[]> = {
-    "1": [
+    "5901234123457": [
       {
         id: "rev1",
-        productId: "1",
+        productId: "5901234123457",
         userId: "user1",
         username: "MiłośnikPielęgnacji",
         rating: 5,
@@ -34,7 +34,7 @@ async function getReviews(productId: string): Promise<Review[]> {
       },
       {
         id: "rev2",
-        productId: "1",
+        productId: "5901234123457",
         userId: "user2",
         username: "BlogerKosmetyczny22",
         userAvatar: "/placeholder.svg?height=40&width=40",

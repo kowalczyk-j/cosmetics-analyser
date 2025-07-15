@@ -24,10 +24,10 @@ async function getExpertOpinions(productId: string): Promise<ExpertOpinion[]> {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   const mockExpertOpinions: Record<string, ExpertOpinion[]> = {
-    "1": [
+    "5901234123457": [
       {
         id: "exp1",
-        productId: "1",
+        productId: "5901234123457",
         expertName: "Dr Anna Kowalska",
         expertTitle: "Dermatolog, Specjalista Medycyny Estetycznej",
         expertAvatar: "/placeholder.svg?height=60&width=60",

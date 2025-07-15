@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, Heart, Search, Calendar, LogOut } from "lucide-react";
 import { ACCESS_TOKEN } from "@/lib/constants";
+import ImportCosingButton from "@/components/ImportCosingButton";
 
 const Toolbar = () => {
   const isLoggedIn = !!localStorage.getItem(ACCESS_TOKEN);
@@ -26,6 +27,7 @@ const Toolbar = () => {
           </Link>
         </div>
         <div className="flex items-center space-x-4">
+          <ImportCosingButton />
           {!isLoggedIn && (
             <>
               <Link

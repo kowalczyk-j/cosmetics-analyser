@@ -27,8 +27,8 @@ async function getComposition(productId: string): Promise<Composition> {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   const mockCompositions: Record<string, Composition> = {
-    "1": {
-      productId: "1",
+    "5901234123457": {
+      productId: "5901234123457",
       ingredients: [
         {
           id: "ing1",

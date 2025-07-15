@@ -155,7 +155,7 @@ export function Homepage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await api.get<Cosmetic[]>("/cosmetics/", {
+      const response = await api.get<Cosmetic[]>("/api/cosmetics/", {
         params: { query: searchQuery },
       });
       setSearchResults(response.data);
@@ -168,15 +168,9 @@ export function Homepage() {
 
   const fetchCosmeticInfo = async (barcode: string) => {
     try {
-      const response = await api.get<Cosmetic[]>("/api/cosmetics/", {
-        params: { barcode },
-      });
-      if (response.data.length > 0) {
-        console.log("Cosmetic info:", response.data);
-        setCosmeticInfo(response.data[0] || null);
-      } else {
-        setCosmeticInfo(null);
-      }
+      const response = await api.get<Cosmetic>(`/api/cosmetics/${barcode}/`);
+      console.log("Cosmetic info:", response.data);
+      setCosmeticInfo(response.data || null);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error fetching cosmetic info:", error);
@@ -308,14 +302,23 @@ export function Homepage() {
                       <h3 className="font-semibold">Wyniki wyszukiwania:</h3>
                       <div className="grid grid-cols-2 gap-2">
                         {searchResults.map((cosmetic) => (
-                          <Card key={cosmetic.id} className="p-2">
-                            <h4 className="font-medium">
-                              {cosmetic.product_name}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {cosmetic.manufacturer}
-                            </p>
-                          </Card>
+                          <Link
+                            key={cosmetic.barcode}
+                            to={`/cosmetics/${cosmetic.barcode}`}
+                            className="group relative"
+                          >
+                            <Card className="p-2">
+                              <h4 className="font-medium">
+                                {cosmetic.product_name}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {cosmetic.manufacturer}
+                              </p>
+                              <p className="absolute top-2 right-2 text-xs bg-black/50 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                {cosmetic.barcode}
+                              </p>
+                            </Card>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -374,7 +377,13 @@ export function Homepage() {
           cosmeticInfo ? "Informacje o produkcie" : "Nie znaleziono produktu"
         }
         footerButtonLabel={cosmeticInfo ? "Sprawdź skład" : "Dodaj produkt"}
-        onFooterButtonClick={() => setIsModalOpen(false)}
+        onFooterButtonClick={() => {
+          if (cosmeticInfo) {
+            window.location.href = `/cosmetics/${cosmeticInfo.barcode}`;
+          } else {
+            setIsModalOpen(false);
+          }
+        }}
         footerButtonIcon={cosmeticInfo ? <Search /> : <CirclePlus />}
       >
         {cosmeticInfo ? (

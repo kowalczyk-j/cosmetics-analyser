@@ -1,11 +1,18 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import action
+from rest_framework.decorators import (
+    action,
+    api_view,
+    permission_classes,
+    parser_classes,
+)
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
+from django.db.models import Q
+import csv
 from .models import (
     Person,
-    User as CustomUser,
     Cosmetic,
     IngredientINCI,
     CosmeticComposition,
@@ -15,6 +22,7 @@ from .models import (
     CarePlanRating,
     FavoriteProduct,
 )
+from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     PersonSerializer,
     UserSerializer,
@@ -27,6 +35,46 @@ from .serializers import (
     CarePlanRatingSerializer,
     FavoriteProductSerializer,
 )
+
+
+# Endpoint for importing COSING.csv
+@csrf_exempt
+@api_view(["POST"])
+# @permission_classes([AllowAny])
+@parser_classes([MultiPartParser, FormParser])
+def import_cosing_view(request):
+    file = request.FILES.get("file")
+    if not file:
+        return Response({"error": "No file provided."}, status=400)
+    decoded_file = file.read().decode("utf-8").splitlines()
+    reader = csv.DictReader(decoded_file)
+    count = 0
+    for row in reader:
+        try:
+            cosing_ref_no = int(row["COSING Ref No"].strip())
+            inci_name = row["INCI name"].strip()
+            common_name = (
+                row.get("INN name", "").strip() or row.get("Ph. Eur. Name", "").strip()
+            )
+            action_description = row.get("Chem/IUPAC Name / Description", "").strip()
+            function = row.get("Function", "").strip()
+            restrictions = row.get("Restriction", "").strip()
+            update_date = row.get("Update Date", "").strip()
+            IngredientINCI.objects.update_or_create(
+                cosing_ref_no=cosing_ref_no,
+                defaults={
+                    "inci_name": inci_name,
+                    "common_name": common_name,
+                    "action_description": action_description,
+                    "function": function,
+                    "restrictions": restrictions,
+                    "update_date": update_date,
+                },
+            )
+            count += 1
+        except Exception as e:
+            continue
+    return Response({"success": True, "imported": count})
 
 
 class PersonViewSet(viewsets.ModelViewSet):
@@ -112,20 +160,13 @@ class CosmeticViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        product_name = self.request.query_params.get("product_name", None)
-        category = self.request.query_params.get("category", None)
-        manufacturer = self.request.query_params.get("manufacturer", None)
-        barcode = self.request.query_params.get("barcode", None)
-
-        if product_name:
-            queryset = queryset.filter(product_name__icontains=product_name)
-        if category:
-            queryset = queryset.filter(category__iexact=category)
-        if manufacturer:
-            queryset = queryset.filter(manufacturer__iexact=manufacturer)
-        if barcode:
-            queryset = queryset.filter(barcode__iexact=barcode)
-
+        search_query = self.request.query_params.get("query", None)  # np. ?search=
+        if search_query:
+            queryset = queryset.filter(
+                Q(product_name__icontains=search_query)
+                | Q(barcode__icontains=search_query)
+                | Q(manufacturer__icontains=search_query)
+            )
         return queryset
 
 

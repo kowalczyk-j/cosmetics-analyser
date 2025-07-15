@@ -16,8 +16,9 @@ import { CompositionList } from "@/components/composition-list";
 import { ReviewsList } from "@/components/reviews-list";
 import { ReviewForm } from "@/components/review-form";
 import { ExpertOpinions } from "@/components/expert-opinions";
+import Toolbar from "@/components/Toolbar";
 
-export function CosmeticDetailsPage() {
+export function CosmeticPage() {
   const { productId } = useParams<{ productId: string }>();
 
   if (!productId) {
@@ -25,106 +26,100 @@ export function CosmeticDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <Link
-          to="/"
-          className="text-sm text-muted-foreground hover:text-primary"
-        >
-          ← Powrót do strony głównej
-        </Link>
-      </div>
+    <div className="flex flex-col min-h-screen bg-background">
+      <Toolbar />
+      <div className="container mx-auto py-8 px-4">
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <Suspense fallback={<CosmeticDetailsSkeleton />}>
+              <CosmeticDetails productId={productId} />
+            </Suspense>
+          </div>
 
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-2">
-          <Suspense fallback={<CosmeticDetailsSkeleton />}>
-            <CosmeticDetails productId={productId} />
-          </Suspense>
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 fill-primary text-primary" />
+                  <span>Średnia Ocena</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+                  <RatingsSummary productId={productId} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 fill-primary text-primary" />
-                <span>Średnia Ocena</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<Skeleton className="h-24 w-full" />}>
-                <RatingsSummary productId={productId} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </div>
+        <Tabs defaultValue="composition" className="mt-8">
+          <TabsList className="grid w-full grid-cols-4 max-w-md">
+            <TabsTrigger value="composition">Skład</TabsTrigger>
+            <TabsTrigger value="expert-opinions">Ocena Ekspertów</TabsTrigger>
+            <TabsTrigger value="reviews">Recenzje</TabsTrigger>
+            <TabsTrigger value="add-review">Dodaj Recenzję</TabsTrigger>
+          </TabsList>
+          <TabsContent value="composition" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Skład (INCI)</CardTitle>
+                <CardDescription>
+                  Pełna lista składników i szczegóły kompozycji
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <CompositionList productId={productId} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="expert-opinions" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Opinie Ekspertów</CardTitle>
+                <CardDescription>
+                  Profesjonalne opinie dermatologów i kosmetologów
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <ExpertOpinions productId={productId} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="reviews" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recenzje Użytkowników</CardTitle>
+                <CardDescription>
+                  Zobacz co inni myślą o tym produkcie
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<ReviewsListSkeleton />}>
+                  <ReviewsList productId={productId} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="add-review" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Napisz Recenzję</CardTitle>
+                <CardDescription>
+                  Podziel się swoim doświadczeniem z tym produktem
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReviewForm productId={productId} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="composition" className="mt-8">
-        <TabsList className="grid w-full grid-cols-4 max-w-md">
-          <TabsTrigger value="composition">Skład</TabsTrigger>
-          <TabsTrigger value="expert-opinions">Opinie Ekspertów</TabsTrigger>
-          <TabsTrigger value="reviews">Recenzje</TabsTrigger>
-          <TabsTrigger value="add-review">Dodaj Recenzję</TabsTrigger>
-        </TabsList>
-        <TabsContent value="composition" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Skład (INCI)</CardTitle>
-              <CardDescription>
-                Pełna lista składników i szczegóły kompozycji
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <CompositionList productId={productId} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="expert-opinions" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Opinie Ekspertów</CardTitle>
-              <CardDescription>
-                Profesjonalne opinie dermatologów i kosmetologów
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                <ExpertOpinions productId={productId} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="reviews" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recenzje Użytkowników</CardTitle>
-              <CardDescription>
-                Zobacz co inni myślą o tym produkcie
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<ReviewsListSkeleton />}>
-                <ReviewsList productId={productId} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="add-review" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Napisz Recenzję</CardTitle>
-              <CardDescription>
-                Podziel się swoim doświadczeniem z tym produktem
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ReviewForm productId={productId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
@@ -184,7 +179,7 @@ function RatingsSummary({ productId }: { productId: string }) {
             cleanIndex: number;
           }
         > = {
-          "1": {
+          "5901234123457": {
             rating: 4.5,
             totalReviews: 27,
             expertOpinions: 3,
