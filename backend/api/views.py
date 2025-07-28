@@ -37,12 +37,15 @@ from .serializers import (
 )
 
 
-# Endpoint for importing COSING.csv
+# importing COSING.csv
 @csrf_exempt
 @api_view(["POST"])
-# @permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def import_cosing_view(request):
+    if not request.user.is_staff:
+        return Response({"error": "Admin privileges required."}, status=403)
+
     file = request.FILES.get("file")
     if not file:
         return Response({"error": "No file provided."}, status=400)
@@ -174,10 +177,37 @@ class IngredientINCIViewSet(viewsets.ModelViewSet):
     queryset = IngredientINCI.objects.all()
     serializer_class = IngredientINCISerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.query_params.get("search", None)
+        function_filter = self.request.query_params.get("function", None)
+
+        if search_query:
+            queryset = queryset.filter(
+                Q(inci_name__icontains=search_query)
+                | Q(common_name__icontains=search_query)
+            )
+
+        if function_filter:
+            queryset = queryset.filter(function__icontains=function_filter)
+
+        return queryset
+
 
 class CosmeticCompositionViewSet(viewsets.ModelViewSet):
-    queryset = CosmeticComposition.objects.all()
+    queryset = CosmeticComposition.objects.select_related(
+        "cosmetic", "ingredient"
+    ).all()
     serializer_class = CosmeticCompositionSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        barcode = self.request.query_params.get("cosmetic", None)
+        if barcode:
+            queryset = queryset.filter(cosmetic__barcode=barcode)
+
+        return queryset.order_by("order_in_composition", "ingredient__inci_name")
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

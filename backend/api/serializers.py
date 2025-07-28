@@ -77,12 +77,12 @@ class IngredientINCISerializer(serializers.ModelSerializer):
 
 
 class CosmeticCompositionSerializer(serializers.ModelSerializer):
-    cosmetic = CosmeticSerializer()
-    ingredient = IngredientINCISerializer()
+    cosmetic = CosmeticSerializer(read_only=True)
+    ingredient = IngredientINCISerializer(read_only=True)
 
     class Meta:
         model = CosmeticComposition
-        fields = ["id", "cosmetic", "ingredient"]
+        fields = ["id", "cosmetic", "ingredient", "order_in_composition"]
 
 
 class ReviewSerializer(serializers.ModelSerializer):

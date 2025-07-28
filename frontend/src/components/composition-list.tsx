@@ -7,78 +7,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IngredientDetails } from "@/components/ingredient-details";
+import api from "@/api/api";
 
-interface Ingredient {
-  id: string;
-  name: string;
-  function: string;
-  concerns?: string[];
-  safetyRating?: number;
-  description?: string;
+interface IngredientINCI {
+  cosing_ref_no: number;
+  inci_name: string;
+  common_name?: string;
+  action_description?: string;
+  function?: string;
+  restrictions?: string;
 }
 
-interface Composition {
-  productId: string;
-  ingredients: Ingredient[];
+interface CosmeticComposition {
+  id: number;
+  order_in_composition: number;
+  ingredient: IngredientINCI;
 }
 
-// Mock implementation of getComposition
-async function getComposition(productId: string): Promise<Composition> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  const mockCompositions: Record<string, Composition> = {
-    "5901234123457": {
-      productId: "5901234123457",
-      ingredients: [
-        {
-          id: "ing1",
-          name: "Aqua/Woda",
-          function: "Rozpuszczalnik",
-          safetyRating: 10,
-          description:
-            "Podstawowy składnik większości kosmetyków. Służy jako rozpuszczalnik dla innych składników. Całkowicie bezpieczny dla skóry.",
-        },
-        {
-          id: "ing2",
-          name: "Gliceryna",
-          function: "Humektant, Rozpuszczalnik",
-          safetyRating: 9,
-          description:
-            "Naturalny składnik nawilżający, który przyciąga wodę do skóry. Pomaga utrzymać odpowiedni poziom nawilżenia i wzmacnia barierę skórną. Uznawany za jeden z najbezpieczniejszych składników w kosmetykach.",
-        },
-        {
-          id: "ing3",
-          name: "Alkohol Cetearylowy",
-          function: "Emulgator, Emolient",
-          safetyRating: 7,
-          description:
-            "Tłusty alkohol używany jako emulgator i czynnik zwiększający lepkość. Pomaga stabilizować formułę i nadaje jej kremową konsystencję. Mimo nazwy zawierającej słowo 'alkohol', nie wysusza skóry.",
-        },
-        {
-          id: "ing4",
-          name: "Fenoksyetanol",
-          function: "Konserwant",
-          safetyRating: 4,
-          concerns: ["Podrażnienie", "Alergie"],
-          description:
-            "Syntetyczny konserwant używany do przedłużania trwałości produktów kosmetycznych. W wyższych stężeniach może powodować podrażnienia u osób z wrażliwą skórą. Dopuszczony do użytku w stężeniu do 1%.",
-        },
-      ],
-    },
-  };
-
-  const composition = mockCompositions[productId];
-
-  if (!composition) {
-    return { productId, ingredients: [] };
+// API call to fetch composition
+async function getComposition(
+  productId: string
+): Promise<CosmeticComposition[]> {
+  try {
+    const response = await api.get(
+      `/api/cosmetic_compositions/?cosmetic=${productId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching composition:", error);
+    throw new Error("Nie udało się pobrać składu kosmetyku.");
   }
-
-  return composition;
 }
-
 export function CompositionList({ productId }: { productId: string }) {
-  const [composition, setComposition] = useState<Composition | null>(null);
+  const [composition, setComposition] = useState<CosmeticComposition[] | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchComposition() {
@@ -87,6 +52,7 @@ export function CompositionList({ productId }: { productId: string }) {
         setComposition(data);
       } catch (error) {
         console.error("Error fetching composition data:", error);
+        setError("Nie udało się załadować składu kosmetyku.");
       } finally {
         setLoading(false);
       }
@@ -103,7 +69,11 @@ export function CompositionList({ productId }: { productId: string }) {
     );
   }
 
-  if (!composition || !composition.ingredients.length) {
+  if (error) {
+    return <div className="text-center py-8 text-red-500">{error}</div>;
+  }
+
+  if (!composition || composition.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         Brak danych o składzie dla tego produktu.
@@ -115,21 +85,34 @@ export function CompositionList({ productId }: { productId: string }) {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground mb-4">
         Ta lista pokazuje wszystkie składniki w tym produkcie zgodnie z
-        Międzynarodowym Nazewnictwem Składników Kosmetycznych (INCI). Kliknij na
-        nazwę składnika, aby zobaczyć więcej informacji.
+        Międzynarodowym Nazewnictwem Składników Kosmetycznych (INCI). Składniki
+        są ułożone w kolejności od najwyższego do najniższego stężenia. Kliknij
+        na nazwę składnika, aby zobaczyć więcej informacji.
       </p>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Składnik</TableHead>
+            <TableHead>Składnik (INCI)</TableHead>
+            <TableHead>Nazwa Popularna</TableHead>
             <TableHead>Funkcja</TableHead>
             <TableHead>Zastrzeżenia</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {composition.ingredients.map((ingredient) => (
-            <IngredientDetails key={ingredient.id} ingredient={ingredient} />
+          {composition.map((item) => (
+            <IngredientDetails
+              key={item.id}
+              ingredient={{
+                id: item.id.toString(),
+                inci_name: item.ingredient.inci_name,
+                common_name: item.ingredient.common_name,
+                function: item.ingredient.function || "",
+                restrictions: item.ingredient.restrictions,
+                action_description: item.ingredient.action_description,
+                order: item.order_in_composition,
+              }}
+            />
           ))}
         </TableBody>
       </Table>
