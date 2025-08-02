@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Heart } from "lucide-react";
+import {
+  ExternalLink,
+  Heart,
+  Edit,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -12,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import api from "@/api/api";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface Cosmetic {
   product_name: string;
@@ -20,6 +29,7 @@ interface Cosmetic {
   barcode: string;
   purchase_link?: string;
   description: string;
+  is_verified: boolean;
 }
 
 async function getCosmeticDetails(productId: string): Promise<Cosmetic> {
@@ -36,6 +46,23 @@ export function CosmeticDetails({ productId }: { productId: string }) {
   const [cosmetic, setCosmetic] = useState<Cosmetic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const { isAdmin } = useIsAdmin();
+
+  const handleVerify = async () => {
+    if (!cosmetic) return;
+
+    setVerifying(true);
+    try {
+      await api.patch(`/api/cosmetics/${productId}/verify/`);
+      setCosmetic({ ...cosmetic, is_verified: true });
+    } catch (error) {
+      console.error("Error verifying cosmetic:", error);
+      setError("Nie udało się zweryfikować kosmetyku.");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchCosmetic() {
@@ -67,8 +94,57 @@ export function CosmeticDetails({ productId }: { productId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">{cosmetic.product_name}</CardTitle>
-        <CardDescription>{cosmetic.manufacturer}</CardDescription>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <CardTitle className="text-2xl">
+                {cosmetic.product_name}
+              </CardTitle>
+              <Badge
+                variant={cosmetic.is_verified ? "default" : "secondary"}
+                className={
+                  cosmetic.is_verified
+                    ? "bg-green-100 text-green-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }
+              >
+                {cosmetic.is_verified ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Zweryfikowany
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Niezweryfikowany
+                  </>
+                )}
+              </Badge>
+            </div>
+            <CardDescription>{cosmetic.manufacturer}</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {isAdmin && !cosmetic.is_verified && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleVerify}
+                disabled={verifying}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {verifying ? "Weryfikuję..." : "Zweryfikuj"}
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/cosmetics/${productId}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edytuj
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">

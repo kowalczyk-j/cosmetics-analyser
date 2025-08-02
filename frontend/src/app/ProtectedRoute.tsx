@@ -3,11 +3,21 @@ import { jwtDecode } from "jwt-decode";
 import api from "../api/api";
 import { REFRESH_TOKEN, ACCESS_TOKEN } from "../lib/constants";
 import { useState, useEffect } from "react";
+import { useIsAdmin } from "../hooks/useIsAdmin";
 
 import { ReactNode } from "react";
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
+interface ProtectedRouteProps {
+  children: ReactNode;
+  requireAdmin?: boolean;
+}
+
+function ProtectedRoute({
+  children,
+  requireAdmin = false,
+}: ProtectedRouteProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     auth().catch(() => setIsAuthorized(false));
@@ -52,7 +62,15 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     return <div>Loading...</div>;
   }
 
-  return isAuthorized ? children : <Navigate to="/login" />;
+  if (!isAuthorized) {
+    return <Navigate to="/login" />;
+  }
+
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
 }
 
 export default ProtectedRoute;

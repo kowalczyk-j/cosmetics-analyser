@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,8 @@ import {
   Search,
   Upload,
   CirclePlus,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
@@ -29,6 +32,7 @@ interface Cosmetic {
   description: string;
   category: string;
   purchase_link?: string;
+  is_verified: boolean;
 }
 
 const HeaderSection = () => {
@@ -308,12 +312,34 @@ export function Homepage() {
                             className="group relative"
                           >
                             <Card className="p-2">
-                              <h4 className="font-medium">
-                                {cosmetic.product_name}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {cosmetic.manufacturer}
-                              </p>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-medium">
+                                    {cosmetic.product_name}
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {cosmetic.manufacturer}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant={
+                                    cosmetic.is_verified
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className={`text-xs ${
+                                    cosmetic.is_verified
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}
+                                >
+                                  {cosmetic.is_verified ? (
+                                    <CheckCircle className="h-2 w-2" />
+                                  ) : (
+                                    <AlertCircle className="h-2 w-2" />
+                                  )}
+                                </Badge>
+                              </div>
                               <p className="absolute top-2 right-2 text-xs bg-black/50 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                 {cosmetic.barcode}
                               </p>

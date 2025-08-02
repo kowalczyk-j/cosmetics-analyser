@@ -33,6 +33,9 @@ class Cosmetic(models.Model):  # Kosmetyk
     purchase_link = models.URLField(
         max_length=200, verbose_name="Purchase Link", blank=True, null=True
     )
+    is_verified = models.BooleanField(
+        default=True, verbose_name="Is Verified", db_index=True
+    )
 
     class Meta:
         indexes = [

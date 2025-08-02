@@ -61,6 +61,7 @@ class CosmeticSerializer(serializers.ModelSerializer):
             "description",
             "category",
             "purchase_link",
+            "is_verified",
         ]
         read_only_fields = ["purchase_link"]
 
@@ -84,6 +85,9 @@ class CosmeticSerializer(serializers.ModelSerializer):
         search_term = "+".join(product_name.lower().split())
         search_term = re.sub(r"[^a-z0-9+ąćęłńóśźż]", "", search_term)
         validated_data["purchase_link"] = f"https://www.ceneo.pl/;szukaj-{search_term}"
+
+        # unverified by default
+        validated_data["is_verified"] = False
 
         try:
             return super().create(validated_data)

@@ -1,5 +1,5 @@
-import { useState, Fragment } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, Fragment, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import Toolbar from "@/components/Toolbar";
 import { CosmeticBasicInfoForm } from "../components/CosmeticBasicInfoForm";
 import { IngredientSearchForm } from "../components/IngredientSearchForm";
 import { CosmeticPreview } from "../components/CosmeticPreview";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import api from "@/api/api";
 
 interface CosmeticData {
@@ -37,22 +38,26 @@ const STEPS = [
   {
     id: 1,
     title: "Podstawowe dane",
-    description: "Uzupełnij informacje o kosmetyku",
+    description: "Edytuj informacje o kosmetyku",
     icon: Package,
   },
   {
     id: 2,
     title: "Lista składników",
-    description: "Wybierz składniki INCI kosmetyku",
+    description: "Edytuj składniki INCI kosmetyku",
     icon: List,
   },
   { id: 3, title: "Podsumowanie", description: "Sprawdź i zapisz", icon: Eye },
 ];
 
-export function AddCosmeticPage() {
+export function EditCosmeticPage() {
   const navigate = useNavigate();
+  const { productId } = useParams<{ productId: string }>();
+  const { isAdmin, isLoading: adminLoading } = useIsAdmin();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [cosmeticData, setCosmeticData] = useState<CosmeticData>({
     product_name: "",
     manufacturer: "",
@@ -60,15 +65,57 @@ export function AddCosmeticPage() {
     description: "",
     category: "",
   });
+  const [selectedIngredients, setSelectedIngredients] = useState<
+    SelectedIngredient[]
+  >([]);
 
-  // for debug
+  useEffect(() => {
+    if (!adminLoading && !isAdmin) {
+      navigate("/", { replace: true });
+    }
+  }, [adminLoading, isAdmin, navigate]);
+
+  useEffect(() => {
+    const loadCosmeticData = async () => {
+      if (!productId) return;
+
+      try {
+        setInitialLoading(true);
+
+        const cosmeticResponse = await api.get(`/api/cosmetics/${productId}`);
+        setCosmeticData(cosmeticResponse.data);
+
+        const compositionResponse = await api.get(
+          `/api/cosmetics/${productId}/composition/`
+        );
+
+        const ingredients = compositionResponse.data.map(
+          (item: any, index: number) => ({
+            cosing_ref_no: item.ingredient.cosing_ref_no,
+            inci_name: item.ingredient.inci_name,
+            common_name: item.ingredient.common_name,
+            function: item.ingredient.function,
+            order: item.order_in_composition || index + 1,
+          })
+        );
+
+        setSelectedIngredients(ingredients);
+      } catch (error) {
+        console.error("Error loading cosmetic data:", error);
+        alert("Nie udało się załadować danych kosmetyku.");
+        navigate("/");
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadCosmeticData();
+  }, [productId, navigate]);
+
   const handleCosmeticDataChange = (newData: CosmeticData) => {
     console.log("Updating cosmetic data:", newData);
     setCosmeticData(newData);
   };
-  const [selectedIngredients, setSelectedIngredients] = useState<
-    SelectedIngredient[]
-  >([]);
 
   const isStepValid = () => {
     switch (currentStep) {
@@ -101,14 +148,17 @@ export function AddCosmeticPage() {
   };
 
   const handleSave = async () => {
-    if (!isStepValid()) return;
+    if (!isStepValid() || !productId) return;
 
     setLoading(true);
     try {
-      // create cosmetic data
-      await api.post("/api/cosmetics/", cosmeticData);
+      // update cosmetic data
+      await api.put(`/api/cosmetics/${productId}/`, cosmeticData);
 
-      // add ingredients
+      // delete old ingredients
+      await api.delete(`/api/cosmetics/${productId}/composition/`);
+
+      // add new ingredients
       const compositionData = selectedIngredients.map((ingredient) => ({
         cosmetic: cosmeticData.barcode,
         ingredient: ingredient.cosing_ref_no,
@@ -119,15 +169,16 @@ export function AddCosmeticPage() {
         await api.post("/api/cosmetic_compositions/", composition);
       }
 
-      // navigate to the new cosmetic page
+      // navigate to the updated cosmetic page
       navigate(`/cosmetics/${cosmeticData.barcode}`);
     } catch (error: any) {
       console.error("Error saving cosmetic:", error);
 
-      // Handle validation errors
+      // handle validation errors
       if (error.response?.data) {
         const errors = error.response.data;
         let errorMessage = "Wystąpiły błędy walidacji:\n\n";
+
         if (errors.product_name) {
           errorMessage += `• Nazwa produktu: ${errors.product_name[0]}\n`;
         }
@@ -172,7 +223,7 @@ export function AddCosmeticPage() {
           <IngredientSearchForm
             selectedIngredients={selectedIngredients}
             onIngredientsChange={setSelectedIngredients}
-            onValidationChange={() => {}}
+            onValidationChange={() => {}} // Walidacja jest już obsługiwana w isStepValid
           />
         );
       case 3:
@@ -187,14 +238,35 @@ export function AddCosmeticPage() {
     }
   };
 
+  // Loading state
+  if (adminLoading || initialLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <Toolbar />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Ładowanie...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Toolbar />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dodaj nowy kosmetyk</h1>
+          <h1 className="text-3xl font-bold mb-2">Edytuj kosmetyk</h1>
           <p className="text-muted-foreground">
-            Dodaj kosmetyk do bazy danych wraz z listą składników INCI
+            Edytuj dane kosmetyku i składniki INCI
           </p>
         </div>
 
@@ -272,7 +344,7 @@ export function AddCosmeticPage() {
             </Button>
           ) : (
             <Button onClick={handleSave} disabled={!isStepValid() || loading}>
-              {loading ? "Zapisywanie..." : "Zapisz kosmetyk"}
+              {loading ? "Zapisywanie..." : "Zapisz zmiany"}
             </Button>
           )}
         </div>

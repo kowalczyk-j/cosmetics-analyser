@@ -187,6 +187,64 @@ class CosmeticViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
+    @action(detail=True, methods=["get", "delete"], permission_classes=[AllowAny])
+    def composition(self, request, pk=None):
+        """
+        Get or delete composition for a specific cosmetic product.
+        GET: Returns list of ingredients in the cosmetic
+        DELETE: Removes all ingredients from the cosmetic (admin)
+        """
+        cosmetic = self.get_object()
+
+        if request.method == "GET":
+            compositions = (
+                CosmeticComposition.objects.filter(cosmetic=cosmetic)
+                .select_related("ingredient")
+                .order_by("order_in_composition")
+            )
+
+            serializer = CosmeticCompositionReadSerializer(compositions, many=True)
+            return Response(serializer.data)
+
+        elif request.method == "DELETE":
+            if not request.user.is_authenticated or not request.user.is_staff:
+                return Response(
+                    {"error": "Admin privileges required."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # delete all composition entries for this cosmetic
+            deleted_count = CosmeticComposition.objects.filter(
+                cosmetic=cosmetic
+            ).delete()[0]
+
+            return Response(
+                {
+                    "message": f"Deleted {deleted_count} composition entries for cosmetic {cosmetic.barcode}"
+                },
+                status=status.HTTP_200_OK,
+            )
+
+    @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated])
+    def verify(self, request, pk=None):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response(
+                {"error": "Admin privileges required."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        cosmetic = self.get_object()
+        cosmetic.is_verified = True
+        cosmetic.save()
+
+        return Response(
+            {
+                "message": f"Cosmetic {cosmetic.product_name} has been verified.",
+                "is_verified": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class IngredientINCIViewSet(viewsets.ModelViewSet):
     queryset = IngredientINCI.objects.all()
