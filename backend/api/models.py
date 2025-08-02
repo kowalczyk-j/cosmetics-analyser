@@ -28,7 +28,7 @@ class Cosmetic(models.Model):  # Kosmetyk
     barcode = models.CharField(
         primary_key=True, max_length=13, verbose_name="Barcode"
     )  # id
-    description = models.TextField(verbose_name="Description")
+    description = models.TextField(verbose_name="Description", blank=True, null=True)
     category = models.CharField(max_length=50, verbose_name="Category", db_index=True)
     purchase_link = models.URLField(
         max_length=200, verbose_name="Purchase Link", blank=True, null=True

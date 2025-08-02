@@ -11,6 +11,7 @@ from .models import (
     CarePlanRating,
     FavoriteProduct,
 )
+import re
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -61,6 +62,34 @@ class CosmeticSerializer(serializers.ModelSerializer):
             "category",
             "purchase_link",
         ]
+        read_only_fields = ["purchase_link"]
+
+    def validate_barcode(self, value):
+        if self.instance is None:
+            if Cosmetic.objects.filter(barcode=value).exists():
+                raise serializers.ValidationError(
+                    f"Kosmetyk z kodem kreskowym {value} już istnieje w bazie danych."
+                )
+        return value
+
+    def validate(self, data):
+        print(f"CosmeticSerializer - Received data: {data}")
+        return data
+
+    def create(self, validated_data):
+        print(f"CosmeticSerializer - Creating cosmetic with data: {validated_data}")
+
+        # generate automatic purchase link based on product name
+        product_name = validated_data.get("product_name", "")
+        search_term = "+".join(product_name.lower().split())
+        search_term = re.sub(r"[^a-z0-9+ąćęłńóśźż]", "", search_term)
+        validated_data["purchase_link"] = f"https://www.ceneo.pl/;szukaj-{search_term}"
+
+        try:
+            return super().create(validated_data)
+        except Exception as e:
+            print(f"CosmeticSerializer - Error creating cosmetic: {e}")
+            raise
 
 
 class IngredientINCISerializer(serializers.ModelSerializer):
@@ -77,6 +106,21 @@ class IngredientINCISerializer(serializers.ModelSerializer):
 
 
 class CosmeticCompositionSerializer(serializers.ModelSerializer):
+    # For creating/updating, we use SlugRelatedField to reference by barcode and cosing_ref_no
+    cosmetic = serializers.SlugRelatedField(
+        slug_field="barcode", queryset=Cosmetic.objects.all()
+    )
+    ingredient = serializers.SlugRelatedField(
+        slug_field="cosing_ref_no", queryset=IngredientINCI.objects.all()
+    )
+
+    class Meta:
+        model = CosmeticComposition
+        fields = ["id", "cosmetic", "ingredient", "order_in_composition"]
+
+
+class CosmeticCompositionReadSerializer(serializers.ModelSerializer):
+    # For read operations, we return full details of cosmetic and ingredient
     cosmetic = CosmeticSerializer(read_only=True)
     ingredient = IngredientINCISerializer(read_only=True)
 

@@ -29,6 +29,7 @@ from .serializers import (
     CosmeticSerializer,
     IngredientINCISerializer,
     CosmeticCompositionSerializer,
+    CosmeticCompositionReadSerializer,
     ReviewSerializer,
     CarePlanSerializer,
     CarePlanContentSerializer,
@@ -161,9 +162,23 @@ class CosmeticViewSet(viewsets.ModelViewSet):
     serializer_class = CosmeticSerializer
     permission_classes = [AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        print(f"CosmeticViewSet - received data: {request.data}")
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(f"CosmeticViewSet - validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        search_query = self.request.query_params.get("query", None)  # np. ?search=
+        search_query = self.request.query_params.get("query", None)
         if search_query:
             queryset = queryset.filter(
                 Q(product_name__icontains=search_query)
@@ -176,6 +191,7 @@ class CosmeticViewSet(viewsets.ModelViewSet):
 class IngredientINCIViewSet(viewsets.ModelViewSet):
     queryset = IngredientINCI.objects.all()
     serializer_class = IngredientINCISerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -200,6 +216,12 @@ class CosmeticCompositionViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = CosmeticCompositionSerializer
     permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        # different serializers for read and write operations
+        if self.action in ["list", "retrieve"]:
+            return CosmeticCompositionReadSerializer
+        return CosmeticCompositionSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
