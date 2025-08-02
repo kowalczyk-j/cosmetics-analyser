@@ -11,6 +11,7 @@ import {
 import { UserAccount } from "../pages/userAccountPage";
 import ProtectedRoute from "./ProtectedRoute";
 import { CosmeticPage } from "@/pages/cosmeticPage";
+import { AddCosmeticPage } from "@/pages/addCosmeticPage";
 
 function Logout() {
   localStorage.clear();
@@ -28,6 +29,14 @@ function App() {
       <Routes>
         <Route path="/cosmetics/:productId" element={<CosmeticPage />} />
         <Route path="/" element={<Homepage />} />
+        <Route
+          path="/add-cosmetic"
+          element={
+            <ProtectedRoute>
+              <AddCosmeticPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/register" element={<RegisterAndLogout />} />
         <Route path="/login" element={<LoginPage />} />

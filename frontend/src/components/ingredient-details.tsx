@@ -6,10 +6,10 @@ import { TableCell, TableRow } from "@/components/ui/table";
 interface Ingredient {
   id: string;
   inci_name: string;
-  common_name?: string;
-  function?: string;
-  restrictions?: string;
-  action_description?: string;
+  common_name: string;
+  function: string;
+  restrictions: string;
+  action_description: string;
   order: number;
 }
 
@@ -69,9 +69,7 @@ export function IngredientDetails({ ingredient }: { ingredient: Ingredient }) {
         <TableCell>
           <span className="text-sm">
             {ingredient.common_name || (
-              <span className="text-muted-foreground italic">
-                Brak nazwy popularnej
-              </span>
+              <span className="text-muted-foreground italic">Brak</span>
             )}
           </span>
         </TableCell>

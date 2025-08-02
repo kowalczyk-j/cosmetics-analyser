@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Heart, Search, Calendar, LogOut } from "lucide-react";
+import { User, Heart, Search, Calendar, LogOut, Plus } from "lucide-react";
 import { ACCESS_TOKEN } from "@/lib/constants";
 import ImportCosingButton from "@/components/ImportCosingButton";
 
@@ -63,6 +63,15 @@ const Toolbar = () => {
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profil</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/add-cosmetic"
+                    className="flex items-center text-foreground"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Dodaj kosmetyk</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>

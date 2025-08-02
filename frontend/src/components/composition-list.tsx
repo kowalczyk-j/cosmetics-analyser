@@ -6,90 +6,70 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { IngredientDetails } from "@/components/ingredient-details";
+import { IngredientDetails } from "./ingredient-details";
 import api from "@/api/api";
 
-interface IngredientINCI {
-  cosing_ref_no: number;
-  inci_name: string;
-  common_name?: string;
-  action_description?: string;
-  function?: string;
-  restrictions?: string;
-}
-
-interface CosmeticComposition {
+interface CompositionItem {
   id: number;
   order_in_composition: number;
-  ingredient: IngredientINCI;
+  cosmetic: string; // barcode
+  ingredient: {
+    cosing_ref_no: number;
+    inci_name: string;
+    common_name?: string;
+    action_description?: string;
+    function?: string;
+    restrictions?: string;
+  };
 }
 
-// API call to fetch composition
-async function getComposition(
-  productId: string
-): Promise<CosmeticComposition[]> {
-  try {
-    const response = await api.get(
-      `/api/cosmetic_compositions/?cosmetic=${productId}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching composition:", error);
-    throw new Error("Nie udało się pobrać składu kosmetyku.");
-  }
-}
 export function CompositionList({ productId }: { productId: string }) {
-  const [composition, setComposition] = useState<CosmeticComposition[] | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [composition, setComposition] = useState<CompositionItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function fetchComposition() {
+    const fetchComposition = async () => {
       try {
-        const data = await getComposition(productId);
-        setComposition(data);
+        setLoading(true);
+        const response = await api.get(
+          `/api/cosmetic_compositions/?cosmetic=${productId}`
+        );
+        console.log("Composition data:", response.data);
+        console.log("First item:", response.data[0]);
+
+        const sortedComposition = response.data.sort(
+          (a: CompositionItem, b: CompositionItem) =>
+            a.order_in_composition - b.order_in_composition
+        );
+
+        setComposition(sortedComposition);
       } catch (error) {
-        console.error("Error fetching composition data:", error);
-        setError("Nie udało się załadować składu kosmetyku.");
+        console.error("Error fetching composition:", error);
+        setComposition([]);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchComposition();
+    if (productId) {
+      fetchComposition();
+    }
   }, [productId]);
 
   if (loading) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Ładowanie danych o składzie...
-      </div>
-    );
+    return <div className="text-center py-4">Ładowanie składników...</div>;
   }
 
-  if (error) {
-    return <div className="text-center py-8 text-red-500">{error}</div>;
-  }
-
-  if (!composition || composition.length === 0) {
+  if (composition.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        Brak danych o składzie dla tego produktu.
+        Nie udało się załadować składu kosmetyku.
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground mb-4">
-        Ta lista pokazuje wszystkie składniki w tym produkcie zgodnie z
-        Międzynarodowym Nazewnictwem Składników Kosmetycznych (INCI). Składniki
-        są ułożone w kolejności od najwyższego do najniższego stężenia. Kliknij
-        na nazwę składnika, aby zobaczyć więcej informacji.
-      </p>
-
       <Table>
         <TableHeader>
           <TableRow>
@@ -100,20 +80,33 @@ export function CompositionList({ productId }: { productId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {composition.map((item) => (
-            <IngredientDetails
-              key={item.id}
-              ingredient={{
-                id: item.id.toString(),
-                inci_name: item.ingredient.inci_name,
-                common_name: item.ingredient.common_name,
-                function: item.ingredient.function || "",
-                restrictions: item.ingredient.restrictions,
-                action_description: item.ingredient.action_description,
-                order: item.order_in_composition,
-              }}
-            />
-          ))}
+          {composition
+            .map((item) => {
+              if (!item || !item.ingredient) {
+                console.warn("Invalid composition item:", item);
+                return null;
+              }
+
+              return (
+                <IngredientDetails
+                  key={item.id}
+                  ingredient={{
+                    id:
+                      item.ingredient.cosing_ref_no?.toString() ||
+                      item.id?.toString() ||
+                      "unknown",
+                    inci_name: item.ingredient.inci_name || "Nieznany składnik",
+                    common_name: item.ingredient.common_name || "",
+                    function: item.ingredient.function || "",
+                    restrictions: item.ingredient.restrictions || "",
+                    action_description:
+                      item.ingredient.action_description || "",
+                    order: item.order_in_composition || 0,
+                  }}
+                />
+              );
+            })
+            .filter(Boolean)}
         </TableBody>
       </Table>
     </div>
