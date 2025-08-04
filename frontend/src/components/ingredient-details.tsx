@@ -11,15 +11,20 @@ interface Ingredient {
   restrictions: string;
   action_description: string;
   order: number;
+  safety_rating?: string;
+  restriction_description?: string;
 }
 
 export function IngredientDetails({ ingredient }: { ingredient: Ingredient }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const parseRestrictions = (restrictions?: string): string[] => {
-    if (!restrictions || restrictions.trim() === "") return [];
-    return restrictions
-      .split(",")
+  const parseRestrictions = (restrictionDescription?: string): string[] => {
+    if (!restrictionDescription || restrictionDescription.trim() === "")
+      return [];
+
+    // split by semicolon - separator in the backend
+    return restrictionDescription
+      .split(";")
       .map((r) => r.trim())
       .filter((r) => r.length > 0);
   };
@@ -30,6 +35,18 @@ export function IngredientDetails({ ingredient }: { ingredient: Ingredient }) {
       .split(",")
       .map((f) => f.trim())
       .filter((f) => f.length > 0);
+  };
+
+  const getSafetyColorClasses = (safetyRating?: string) => {
+    switch (safetyRating) {
+      case "harmful":
+        return "text-red-700 border-l-4 border-red-500 pl-2";
+      case "beneficial":
+        return "text-green-700 border-l-4 border-green-500 pl-2";
+      case "neutral":
+      default:
+        return "text-gray-700 border-l-4 border-gray-400 pl-2";
+    }
   };
 
   const getTooltipText = (text: string): string => {
@@ -53,7 +70,9 @@ export function IngredientDetails({ ingredient }: { ingredient: Ingredient }) {
         <TableCell>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="font-medium text-left flex items-center hover:text-primary"
+            className={`font-medium text-left flex items-center hover:text-primary transition-colors ${getSafetyColorClasses(
+              ingredient.safety_rating
+            )}`}
           >
             <span className="mr-2 text-xs text-muted-foreground font-normal">
               {ingredient.order}.
@@ -93,14 +112,15 @@ export function IngredientDetails({ ingredient }: { ingredient: Ingredient }) {
         </TableCell>
         <TableCell>
           <div className="flex flex-wrap gap-1">
-            {parseRestrictions(ingredient.restrictions).length > 0 ? (
-              parseRestrictions(ingredient.restrictions).map(
+            {parseRestrictions(ingredient.restriction_description).length >
+            0 ? (
+              parseRestrictions(ingredient.restriction_description).map(
                 (restriction, index) => (
                   <Badge
                     key={index}
                     variant="destructive"
                     className="text-xs cursor-help"
-                    title={getTooltipText(restriction)}
+                    title={restriction}
                   >
                     {restriction}
                   </Badge>

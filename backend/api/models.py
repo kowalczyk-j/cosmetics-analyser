@@ -52,6 +52,12 @@ class Cosmetic(models.Model):  # Kosmetyk
 
 
 class IngredientINCI(models.Model):  # Składnik_INCI
+    SAFETY_CHOICES = [
+        ("harmful", "Potencjalnie szkodliwy"),
+        ("neutral", "Neutralny"),
+        ("beneficial", "Korzystny"),
+    ]
+
     cosing_ref_no = models.IntegerField(primary_key=True, verbose_name="COSING Ref No")
     inci_name = models.CharField(
         max_length=200, verbose_name="INCI Name", db_index=True
@@ -68,6 +74,16 @@ class IngredientINCI(models.Model):  # Składnik_INCI
     restrictions = models.TextField(verbose_name="Restrictions", blank=True, null=True)
     update_date = models.CharField(
         max_length=20, verbose_name="Update Date", blank=True, null=True
+    )
+    safety_rating = models.CharField(
+        max_length=20,
+        choices=SAFETY_CHOICES,
+        default="neutral",
+        verbose_name="Safety Rating",
+        db_index=True,
+    )
+    restriction_description = models.TextField(
+        verbose_name="Restriction Description", blank=True, null=True
     )
 
     class Meta:

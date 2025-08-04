@@ -20,6 +20,8 @@ interface CompositionItem {
     action_description?: string;
     function?: string;
     restrictions?: string;
+    safety_rating?: string;
+    restriction_description?: string;
   };
 }
 
@@ -102,6 +104,9 @@ export function CompositionList({ productId }: { productId: string }) {
                     action_description:
                       item.ingredient.action_description || "",
                     order: item.order_in_composition || 0,
+                    safety_rating: item.ingredient.safety_rating || "neutral",
+                    restriction_description:
+                      item.ingredient.restriction_description || "",
                   }}
                 />
               );

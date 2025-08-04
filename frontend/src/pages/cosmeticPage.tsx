@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Star, StarHalf } from "lucide-react";
 import {
   Card,
@@ -16,6 +16,7 @@ import { CompositionList } from "@/components/composition-list";
 import { ReviewsList } from "@/components/reviews-list";
 import { ReviewForm } from "@/components/review-form";
 import { ExpertOpinions } from "@/components/expert-opinions";
+import { CleanScore } from "@/components/clean-score";
 import Toolbar from "@/components/Toolbar";
 
 export function CosmeticPage() {
@@ -36,7 +37,11 @@ export function CosmeticPage() {
             </Suspense>
           </div>
 
-          <div>
+          <div className="space-y-6">
+            <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+              <CleanScore productId={productId} />
+            </Suspense>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -161,7 +166,6 @@ function RatingsSummary({ productId }: { productId: string }) {
     rating: number;
     totalReviews: number;
     expertOpinions: number;
-    cleanIndex: number;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -176,26 +180,22 @@ function RatingsSummary({ productId }: { productId: string }) {
             rating: number;
             totalReviews: number;
             expertOpinions: number;
-            cleanIndex: number;
           }
         > = {
           "5901234123457": {
             rating: 4.5,
             totalReviews: 27,
             expertOpinions: 3,
-            cleanIndex: 92,
           },
           "2": {
             rating: 4.2,
             totalReviews: 42,
             expertOpinions: 5,
-            cleanIndex: 85,
           },
           "3": {
             rating: 4.8,
             totalReviews: 35,
             expertOpinions: 4,
-            cleanIndex: 97,
           },
         };
 
@@ -203,7 +203,6 @@ function RatingsSummary({ productId }: { productId: string }) {
           rating: 0,
           totalReviews: 0,
           expertOpinions: 0,
-          cleanIndex: 0,
         };
 
         setRatingData(data);
@@ -225,7 +224,7 @@ function RatingsSummary({ productId }: { productId: string }) {
     return <div>Nie znaleziono danych o ocenach.</div>;
   }
 
-  const { rating, totalReviews, expertOpinions, cleanIndex } = ratingData;
+  const { rating, totalReviews, expertOpinions } = ratingData;
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -250,22 +249,6 @@ function RatingsSummary({ productId }: { productId: string }) {
       </div>
       <div className="text-sm text-muted-foreground">
         W tym {expertOpinions} opinii ekspertów
-      </div>
-
-      <div className="mt-4 pt-4 border-t w-full">
-        <div className="text-sm font-medium mb-2">Wskaźnik Clean</div>
-        <div className="flex items-center gap-2">
-          <div className="w-full bg-muted rounded-full h-2.5">
-            <div
-              className="bg-green-500 h-2.5 rounded-full"
-              style={{ width: `${cleanIndex}%` }}
-            ></div>
-          </div>
-          <span className="text-sm font-medium">{cleanIndex}%</span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Procent składników korzystnych dla skóry
-        </p>
       </div>
     </div>
   );

@@ -106,6 +106,8 @@ class IngredientINCISerializer(serializers.ModelSerializer):
             "action_description",
             "function",
             "restrictions",
+            "safety_rating",
+            "restriction_description",
         ]
 
 

@@ -11,6 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
 from django.db.models import Q
 import csv
+import re
 from .models import (
     Person,
     Cosmetic,
@@ -36,6 +37,87 @@ from .serializers import (
     CarePlanRatingSerializer,
     FavoriteProductSerializer,
 )
+
+
+def parse_restriction_description(restriction_text):
+    if not restriction_text or restriction_text.strip() == "":
+        return ""
+
+    annexes = {
+        "II": "Substancja zakazana w kosmetykach UE",
+        "III": "Dozwolona warunkowo z ograniczeniami stężenia",
+        "IV": "Dozwolony barwnik z określonymi warunkami użycia",
+        "V": "Dozwolony konserwant z limitami stężeń",
+        "VI": "Dozwolony filtr UV z ograniczeniami użycia",
+    }
+
+    roman_numerals = re.findall(r"\b(I{1,3}|IV|V|VI)\b", restriction_text)
+
+    descriptions = []
+    for numeral in set(roman_numerals):
+        if numeral in annexes:
+            descriptions.append(annexes[numeral])
+
+    return "; ".join(descriptions) if descriptions else ""
+
+
+def evaluate_ingredient_safety(function_text, restrictions):
+    if restrictions and restrictions.strip():
+        return "harmful"
+
+    if not function_text:
+        return "neutral"
+
+    beneficial_functions = {
+        "ABRASIVE",
+        "EXFOLIATING",
+        "ANTI-DANDRUFF",
+        "ANTI-SEBORRHEIC",
+        "ANTI-SEBUM",
+        "ANTIMICROBIAL",
+        "ANTIOXIDANT",
+        "ASTRINGENT",
+        "BLEACHING",
+        "EMOLLIENT",
+        "HAIR CONDITIONING",
+        "HAIR WAVING OR STRAIGHTENING",
+        "HUMECTANT",
+        "KERATOLYTIC",
+        "MOISTURISING",
+        "NAIL CONDITIONING",
+        "ORAL CARE",
+        "OXIDISING",
+        "REDUCING",
+        "REFRESHING",
+        "SKIN CONDITIONING",
+        "SKIN CONDITIONING - EMOLLIENT",
+        "SKIN CONDITIONING - HUMECTANT",
+        "SKIN CONDITIONING - MISCELLANEOUS",
+        "SKIN CONDITIONING - OCCLUSIVE",
+        "SKIN PROTECTING",
+        "SMOOTHING",
+        "SOOTHING",
+        "TANNING",
+        "TONIC",
+        "UV ABSORBER",
+        "UV FILTER",
+    }
+
+    functions = re.split(r"[,;/\|]", function_text.upper())
+    functions = [f.strip() for f in functions if f.strip()]
+
+    beneficial_count = 0
+    total_count = len(functions)
+
+    for func in functions:
+        if func in beneficial_functions:
+            beneficial_count += 1
+
+    # if >= 50% of functions are beneficial, mark as beneficial
+    if total_count > 0 and beneficial_count / total_count >= 0.5:
+        return "beneficial"
+
+    return "neutral"
 
 
 # importing COSING.csv
@@ -64,6 +146,11 @@ def import_cosing_view(request):
             function = row.get("Function", "").strip()
             restrictions = row.get("Restriction", "").strip()
             update_date = row.get("Update Date", "").strip()
+
+            # Evaluate safety and parse restrictions
+            safety_rating = evaluate_ingredient_safety(function, restrictions)
+            restriction_description = parse_restriction_description(restrictions)
+
             IngredientINCI.objects.update_or_create(
                 cosing_ref_no=cosing_ref_no,
                 defaults={
@@ -73,6 +160,8 @@ def import_cosing_view(request):
                     "function": function,
                     "restrictions": restrictions,
                     "update_date": update_date,
+                    "safety_rating": safety_rating,
+                    "restriction_description": restriction_description,
                 },
             )
             count += 1
@@ -255,6 +344,7 @@ class IngredientINCIViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         search_query = self.request.query_params.get("search", None)
         function_filter = self.request.query_params.get("function", None)
+        safety_filter = self.request.query_params.get("safety", None)
 
         if search_query:
             queryset = queryset.filter(
@@ -265,7 +355,51 @@ class IngredientINCIViewSet(viewsets.ModelViewSet):
         if function_filter:
             queryset = queryset.filter(function__icontains=function_filter)
 
+        if safety_filter:
+            queryset = queryset.filter(safety_rating=safety_filter)
+
         return queryset
+
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def recalculate_safety(self, request):
+        """
+        Recalculate safety ratings for all existing ingredients (admin only)
+        """
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response(
+                {"error": "Admin privileges required."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        updated_count = 0
+        ingredients = IngredientINCI.objects.all()
+
+        for ingredient in ingredients:
+            old_rating = ingredient.safety_rating
+            new_rating = evaluate_ingredient_safety(
+                ingredient.function, ingredient.restrictions
+            )
+            new_restriction_desc = parse_restriction_description(
+                ingredient.restrictions
+            )
+
+            if (
+                old_rating != new_rating
+                or ingredient.restriction_description != new_restriction_desc
+            ):
+                ingredient.safety_rating = new_rating
+                ingredient.restriction_description = new_restriction_desc
+                ingredient.save()
+                updated_count += 1
+
+        return Response(
+            {
+                "message": f"Updated safety ratings for {updated_count} ingredients.",
+                "updated_count": updated_count,
+                "total_count": ingredients.count(),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class CosmeticCompositionViewSet(viewsets.ModelViewSet):
