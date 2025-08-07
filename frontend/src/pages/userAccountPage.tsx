@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Toolbar from "@/components/Toolbar";
+import { SkinSurvey } from "@/components/skin-survey";
 
 function ConfirmEmailChangeModal({
   visible,
@@ -63,7 +64,11 @@ export function UserAccount() {
   const [userData, setUserData] = useState<{
     username: string;
     email: string;
-    person?: { specialization: string };
+    person?: {
+      specialization: string;
+      skin_type?: string;
+      skin_problems?: string;
+    };
     is_staff?: boolean;
     date_joined?: string;
   } | null>(null);
@@ -72,6 +77,7 @@ export function UserAccount() {
 
   const [skinType, setSkinType] = useState("normal");
   const [skinConcerns, setSkinConcerns] = useState<string[]>([]);
+  const [showSkinSurvey, setShowSkinSurvey] = useState(false);
 
   const [newEmail, setNewEmail] = useState("");
   const [errorEmail, setErrorEmail] = useState("");
@@ -81,18 +87,18 @@ export function UserAccount() {
   const [errorPass, setErrorPass] = useState("");
   const [showConfirmEmailModal, setShowConfirmEmailModal] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await api.get("/api/users/me/");
-        setUserData(response.data);
-      } catch {
-        setError("Nie udało się pobrać danych użytkownika.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchUserData = async () => {
+    try {
+      const response = await api.get("/api/users/me/");
+      setUserData(response.data);
+    } catch {
+      setError("Nie udało się pobrać danych użytkownika.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
   }, []);
 
@@ -230,74 +236,66 @@ export function UserAccount() {
               Moja skóra
             </AccordionTrigger>
             <AccordionContent>
-              <Card>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 mt-4">
-                    Uzupełnij informacje o swojej skórze, abyśmy mogli lepiej
-                    dopasować produkty do Twoich potrzeb.
-                  </p>
-                  <form className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="skin-type">Typ skóry</Label>
-                      <Select value={skinType} onValueChange={setSkinType}>
-                        <SelectTrigger id="skin-type">
-                          <SelectValue placeholder="Wybierz typ skóry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="normal">Normalna</SelectItem>
-                          <SelectItem value="dry">Sucha</SelectItem>
-                          <SelectItem value="oily">Tłusta</SelectItem>
-                          <SelectItem value="combination">Mieszana</SelectItem>
-                          <SelectItem value="sensitive">Wrażliwa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              {showSkinSurvey ? (
+                <SkinSurvey
+                  onComplete={() => {
+                    setShowSkinSurvey(false);
+                    fetchUserData();
+                  }}
+                />
+              ) : (
+                <Card>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4 mt-4">
+                      Uzupełnij informacje o swojej skórze, abyśmy mogli lepiej
+                      dopasować produkty do Twoich potrzeb.
+                    </p>
 
-                    <div className="space-y-2">
-                      <Label>Problemy skórne</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          "Trądzik",
-                          "Zmarszczki",
-                          "Przebarwienia",
-                          "Zaczerwienienia",
-                          "Suchość",
-                        ].map((concern) => (
-                          <Button
-                            key={concern}
-                            variant={
-                              skinConcerns.includes(concern)
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setSkinConcerns((prev) =>
-                                prev.includes(concern)
-                                  ? prev.filter((c) => c !== concern)
-                                  : [...prev, concern]
-                              );
-                            }}
-                          >
-                            {concern}
-                          </Button>
-                        ))}
+                    {userData?.person && (
+                      <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                        <h4 className="font-semibold mb-2">
+                          Twój obecny profil skóry:
+                        </h4>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-sm font-medium">
+                              Typ skóry:
+                            </span>
+                            <Badge variant="outline" className="ml-2">
+                              {userData.person.skin_type || "Nie określono"}
+                            </Badge>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">
+                              Problemy skórne:
+                            </span>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {userData.person.skin_problems || "Brak"}
+                            </p>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <Button
+                        onClick={() => setShowSkinSurvey(true)}
+                        className="w-full"
+                      >
+                        {userData?.person?.skin_type
+                          ? "Wypełnij ankietę ponownie"
+                          : "Wypełnij ankietę o typie skóry"}
+                      </Button>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        Ankieta pomoże nam dokładnie określić Twój typ skóry i
+                        problemy skórne na podstawie sprawdzonej metodologii
+                        dermatologicznej.
+                      </p>
                     </div>
-                    <Button type="submit">Zapisz zmiany</Button>
-                  </form>
-                  <div className="mt-4">
-                    <Link
-                      to="/skin-survey"
-                      className="text-primary hover:underline"
-                    >
-                      Nie znasz się na tym? Wypełnij ankietę i pomóż nam wybrać
-                      za ciebie
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
             </AccordionContent>
           </AccordionItem>
 

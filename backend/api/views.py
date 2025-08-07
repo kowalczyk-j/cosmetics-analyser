@@ -69,38 +69,42 @@ def evaluate_ingredient_safety(function_text, restrictions):
         return "neutral"
 
     beneficial_functions = {
-        "ABRASIVE",
-        "EXFOLIATING",
+        "ŚCIERAJĄCA",
+        "ZŁUSZCZAJĄCA",
         "ANTI-DANDRUFF",
-        "ANTI-SEBORRHEIC",
-        "ANTI-SEBUM",
-        "ANTIMICROBIAL",
-        "ANTIOXIDANT",
-        "ASTRINGENT",
-        "BLEACHING",
-        "EMOLLIENT",
-        "HAIR CONDITIONING",
-        "HAIR WAVING OR STRAIGHTENING",
-        "HUMECTANT",
-        "KERATOLYTIC",
-        "MOISTURISING",
-        "NAIL CONDITIONING",
-        "ORAL CARE",
-        "OXIDISING",
-        "REDUCING",
-        "REFRESHING",
-        "SKIN CONDITIONING",
-        "SKIN CONDITIONING - EMOLLIENT",
-        "SKIN CONDITIONING - HUMECTANT",
-        "SKIN CONDITIONING - MISCELLANEOUS",
-        "SKIN CONDITIONING - OCCLUSIVE",
-        "SKIN PROTECTING",
-        "SMOOTHING",
-        "SOOTHING",
-        "TANNING",
-        "TONIC",
-        "UV ABSORBER",
-        "UV FILTER",
+        "PRZECIWŁOJOTOKOWA",
+        "REGULUJĄCA WYDZIELANIE SEBUM",
+        "PRZECIWDROBNOUSTROJOWA",
+        "PRZECIWUTLENIAJĄCA",
+        "ANTYOKSYDANT",
+        "ŚCIĄGAJĄCA",
+        "WYBIELAJĄCA",
+        "ROZJAŚNIAJĄCA",
+        "ZMIĘKCZAJĄCA",
+        "WYGŁADZAJĄCA",
+        "EMOLIENT",
+        "KONDYCJONUJĄCA WŁOSY",
+        "DO SKRĘCANIA LUB PROSTOWANIA WŁOSÓW",
+        "NAWILŻAJĄCA",
+        "HUMEKTANT",
+        "KERATOLITYCZNA",
+        "ODŻYWIAJĄCA PAZNOKCIE",
+        "DO PIELĘGNACJI JAMY USTNEJ",
+        "UTLENIAJĄCA",
+        "REDUKUJĄCA",
+        "ODŚWIEŻAJĄCA",
+        "KONDYCJONUJĄCA SKÓRĘ",
+        "KONDYCJONUJĄCA SKÓRĘ - ZMIĘKCZAJĄCA",
+        "KONDYCJONUJĄCA SKÓRĘ - NAWILŻAJĄCA",
+        "KONDYCJONUJĄCA SKÓRĘ - HUMEKTANT",
+        "KONDYCJONUJĄCA SKÓRĘ - OGÓLNE",
+        "KONDYCJONUJĄCA SKÓRĘ - OKLUZYJNA",
+        "CHRONIĄCA SKÓRĘ",
+        "ŁAGODZĄCA",
+        "OPALAJĄCA",
+        "TONIZUJĄCA",
+        "ABSORBUJĄCA UV",
+        "FILTR UV",
     }
 
     functions = re.split(r"[,;/\|]", function_text.upper())
@@ -243,6 +247,44 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response(
             {"detail": "Hasło zostało zmienione."}, status=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=["patch"], permission_classes=[IsAuthenticated])
+    def update_skin_profile(self, request):
+        """
+        Update skin profile for the user.
+        """
+        user = request.user
+        skin_type = request.data.get("skin_type", "")
+        skin_problems = request.data.get("skin_problems", [])
+
+        if not skin_type:
+            return Response(
+                {"detail": "Typ skóry jest wymagany."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        person, created = Person.objects.get_or_create(
+            user=user,
+            defaults={
+                "skin_type": skin_type,
+                "skin_problems": ", ".join(skin_problems) if skin_problems else "Brak",
+                "specialization": "user",
+            },
+        )
+
+        if not created:
+            person.skin_type = skin_type
+            person.skin_problems = ", ".join(skin_problems) if skin_problems else "Brak"
+            person.save()
+
+        return Response(
+            {
+                "detail": "Profil skóry został zaktualizowany.",
+                "skin_type": person.skin_type,
+                "skin_problems": person.skin_problems,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
